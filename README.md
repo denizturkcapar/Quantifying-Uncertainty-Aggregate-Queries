@@ -5,7 +5,7 @@
 Build a bipartite matching algorithm in python -- maximal bipartite matching. 
 
 Steps: 
-Define a graph in terms of python dictionary. 
+Define a graph
 
 1 set of keys from table a. one set of keys from table b. 
 
