@@ -5,13 +5,16 @@
 Build a bipartite matching algorithm in python -- maximal bipartite matching. 
 
 Steps: 
-Define a graph
 
-1 set of keys from table a. one set of keys from table b. 
+1. Define a bipartite graph structure
 
-the other set would describe the relationship between the tables (weighted relationship). 
+2. 1 set of keys from table a. one set of keys from table b. 
 
-Any possible match can be an edge in this graph
+Notes: 
+
+- The other set would describe the relationship between the tables (weighted relationship). 
+
+- Any possible match can be an edge in this graph
 
 ## Tasks after Meeting 03.25.2020
 
