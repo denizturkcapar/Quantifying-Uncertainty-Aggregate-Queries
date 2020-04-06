@@ -34,3 +34,5 @@ Notes:
 2. Check the accuracy performance of the bipartite matching (using the ground truth dataset)
 
 Note: The dataset is not added to this repository due to memory constraints. Please put the dataset in the same folder as the notebook file while running the code. 
+
+Link for the dataset: https://www.openicpsr.org/openicpsr/project/100843/version/V2/view
