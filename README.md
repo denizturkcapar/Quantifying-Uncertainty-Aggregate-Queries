@@ -36,3 +36,11 @@ Notes:
 Note: The dataset is not added to this repository due to memory constraints. Please put the dataset in the same folder as the notebook file while running the code. 
 
 Link for the dataset: https://www.openicpsr.org/openicpsr/project/100843/version/V2/view
+
+## Tasks after Meeting 04.10.2020
+
+### Generalize the code to:
+
+1. Use the "_1" and "_2" labels so that the code can be further generalized to different matchings
+
+2. Use a built in similarity metric library written in source C/C++ so that we can eliminate any slowness stemming from the similarity metrics that I've handcoded myself.
