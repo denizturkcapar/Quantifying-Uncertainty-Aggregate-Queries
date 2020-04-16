@@ -49,10 +49,12 @@ Link for the dataset: https://www.openicpsr.org/openicpsr/project/100843/version
 
 * Jupyter did not recognize some of the already installed libraries (the libraries that I tried to install through PyPI's similarity metric packages). Running jupyter in a conda environment solved the problem. In order to run this jupyter notebook in a conda environment, follow these steps:
 
-1. Run a `git pull` on this repository to get the latest commits
+1. Make sure you have anaconda installed https://docs.continuum.io/anaconda/install/#
 
-2. Run `conda env create -f environment.yml`
+2. Run a `git pull` on this repository to get the latest commits
 
-3. Run `conda activate datares1-env`
+3. Run `conda env create -f environment.yml`
+
+4. Run `conda activate datares1-env`
 
 4. Run `jupyter notebook` or run `jupyter lab`
