@@ -44,3 +44,15 @@ Link for the dataset: https://www.openicpsr.org/openicpsr/project/100843/version
 1. Use the "_1" and "_2" labels so that the code can be further generalized to different matchings
 
 2. Use a built in similarity metric library written in source C/C++ so that we can eliminate any slowness stemming from the similarity metrics that I've handcoded myself.
+
+### Update: Anaconda Compability
+
+* Jupyter did not recognize some of the already installed libraries (the libraries that I tried to install through PyPI's similarity metric packages). Running jupyter in a conda environment solved the problem. In order to run this jupyter notebook in a conda environment, follow these steps:
+
+1. Run a `git pull` on this repository to get the latest commits
+
+2. Run `conda env create -f environment.yml`
+
+3. Run `conda activate datares1-env`
+
+4. Run `jupyter notebook` or run `jupyter lab`
