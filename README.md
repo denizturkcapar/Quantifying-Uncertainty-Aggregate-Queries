@@ -58,3 +58,22 @@ Link for the dataset: https://www.openicpsr.org/openicpsr/project/100843/version
 4. Run `conda activate datares1-env`
 
 4. Run `jupyter notebook` or run `jupyter lab`
+
+
+
+## Tasks after Meeting 04.27.2020
+### Modularize the code
+
+The code structure is now as follows:
+
+- `core.py` includes all the essential functions that are contained in the bipartite matching algorithm
+
+- Tests use the `core` module in the `src` folder. The tests can be found in the `tests/` folder
+
+- There are 2 test files:
+
+  - The `tests_basic.py` file contains tests that check whether the functions in the core module are working correctly.
+
+  - The `tests_advanced.py` file contains tests that evaluate the precision and accuracy of the matchings according to the perfect mapping that is provided as an example in this file.
+
+

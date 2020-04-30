@@ -1,4 +1,8 @@
-from .context import src
+import sys
+from os import path
+sys.path.append(path.dirname(path.dirname(path.abspath(__file__))))
+from src import core
+from src import helpers
 
 import datetime
 import textdistance
@@ -68,6 +72,19 @@ def eval_matching(matching):
             'accuracy': 2*(prec*rec)/(prec+rec)}
 
 
+
+table_a = core.convert_df("ACM.csv")
+table_b = core.convert_df("DBLP2.csv")
+
+
+treshold_graph_maximal = core.treshold_updated_maximal_construct_graph(table_a, table_b, 0.3)
+matching_set = nx.algorithms.matching.max_weight_matching(treshold_graph_maximal)
+
+
+lowered_tresh_graph = core.treshold_updated_maximal_construct_graph(table_a, table_b, 0.25)
+lowered_tresh_matching = nx.algorithms.matching.max_weight_matching(lowered_tresh_graph)
+
+
 #prints out the accuracy for 0.3 threshold
 now = datetime.datetime.now()
 out = eval_matching(retrieve(matching_set)) # retrieve() returns a list of tuples of DBLP2 ids and ACM ids.
@@ -85,7 +102,5 @@ print("----Accuracy----")
 print(out)
 print("---- Timing ----")
 print(timing_lower,"seconds")
-
-#prints out accuracy for 0 treshold ()
 
 
