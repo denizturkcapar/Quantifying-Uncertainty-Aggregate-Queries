@@ -25,6 +25,13 @@ def convert_df(file):
         return df
 # changed latin encoding, it was giving an error with table_a example
 
+def lat_convert_df(file):
+    if isinstance(file, pd.DataFrame):
+        return file
+    else:
+        df = pd.read_csv(file, encoding='latin-1')
+        return df
+
 """
 
 Duplicates the dataframe that is assigned the "1" labeled data frame in the "1-n" matching scheme.
@@ -122,12 +129,12 @@ Input: Any 2 files in any format
 Output: A Bipartite Graph with Minimal Weights
 """
 # convert to lowercase
-def treshold_updated_maximal_construct_graph(file_one, file_n, treshold_decimal):
+def keycomp_treshold_updated_maximal_construct_graph(file_one, file_n, col_to_dup, treshold_decimal):
     table_a_unprocessed = convert_df(file_one)
     table_b_unprocessed = convert_df(file_n)
     bipartite_graph = nx.Graph()
     
-    table_a_unprocessed = create_duplicates(table_a_unprocessed, "aa", 3) # Assuming that the user inputs 3 duplicates
+    table_a_unprocessed = create_duplicates(table_a_unprocessed, col_to_dup, 3) # Assuming that the user inputs 3 duplicates
 
     table_a = make_dict(table_a_unprocessed)
     table_b = make_dict(table_b_unprocessed)
@@ -156,6 +163,43 @@ def treshold_updated_maximal_construct_graph(file_one, file_n, treshold_decimal)
             
     return bipartite_graph
 
+
+def valcomp_treshold_updated_maximal_construct_graph(file_one, file_n, treshold_decimal):
+    table_a_unprocessed = convert_df(file_one)
+    table_b_unprocessed = convert_df(file_n)
+    bipartite_graph = nx.Graph()
+
+    table_a_unprocessed = create_duplicates(table_a_unprocessed, "id", 3) # Assuming that the user inputs 3 duplicates
+    
+    table_a = make_dict(table_a_unprocessed)
+    table_b = make_dict(table_b_unprocessed)
+    
+    i=0
+    
+    for key1, val1 in table_a.items():
+        comp_point_1 = val1[0]
+      #  print(comp_point_1)
+        id1 = str(key1) + '_'+ str(comp_point_1) + '_1'
+
+        for key2, val2 in table_b.items():
+            comp_point_2 = val2[0]
+            dist = calc_max_weight_edit(str(comp_point_1).lower(),str(comp_point_2).lower())
+            i+=1
+            if i%100000 == 0:
+                print(str(round(100*i/len(table_a)/len(table_b),2))+'% complete')
+            if dist >= treshold_decimal:
+              #  print(key1,key2,dist)
+                #add value to identifier to disitnguish two entries with different values
+                id2 = str(key2) + '_' + str(comp_point_2) + '_2' 
+                bipartite_graph.add_edge(id1, id2, weight=dist)
+                #edit distance and weight should be inv. prop.
+                #also adding 1 to denom. to prevent divide by 0
+                # add 1,2 to distinguish two key-value tuples belonging to different tables
+            else:
+                continue
+            
+    return bipartite_graph
+
 """
 Retrieves the keys that are going to be compared for the matching with the perfect mapping to evaluate the accuracy.
 
@@ -167,7 +211,7 @@ def collapse(matching_set):
 	res2 = list(matching_set)
 	res_tuple = []
 	for i in res2:
-	#	print(i)
+
 		if i[0].split("_")[1].isdigit() == True:
 
 			if int(i[0].split("_")[3]) == 1:
@@ -192,13 +236,16 @@ def collapse(matching_set):
 
 	return res_tuple
 
+"""
+Collapse the results further to a dictionary format. I've made it optional as a separate function for now.
+Although it is quite possible to merge this function with collapsed() function
+
+Input: The output received from collapsed() function
+Output: A dictionary that has the key as the de-duplicated entries and the values as the "n" table values that they got matched
+"""
 def collapsed_dict(res):
 	out = collections.defaultdict(list)
 	for (val, key) in res:
-		print(val,key)
-	#	if key not in out:
-	#		out[key] = val
-	#	else:
 		out[key].append(str(val))
 	return out
 """

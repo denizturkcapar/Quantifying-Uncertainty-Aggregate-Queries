@@ -96,7 +96,7 @@ USA_2 ------> U.S.A
 
 Collapsing the duplicates:
 
-USA ---> US_probability, U.S.A_probability
+USA ---> US, U.S.A
 
 The updated code structure is now as follows:
 

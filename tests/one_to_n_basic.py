@@ -13,10 +13,10 @@ import networkx as nx
 table_a = one_to_n.convert_df("table_a.csv")
 table_b = one_to_n.convert_df("table_b.csv")
 repeat = one_to_n.create_duplicates(table_a, "aa", 3)
-print(repeat)
+print("The duplicated table is as follows:\n", repeat, "\n")
 
 now = datetime.datetime.now()
-treshold_graph_maximal = one_to_n.treshold_updated_maximal_construct_graph(table_a, table_b, 0.5)
+treshold_graph_maximal = one_to_n.keycomp_treshold_updated_maximal_construct_graph(table_a, table_b, "aa", 0.5)
 timing_tresh = (datetime.datetime.now()-now).total_seconds()
 print("---- Timing for Graph Construction with Treshold Constraint ----")
 print(timing_tresh,"seconds")
@@ -32,12 +32,14 @@ matching_set = nx.algorithms.matching.max_weight_matching(treshold_graph_maximal
 timing_match = (datetime.datetime.now()-now).total_seconds()
 print("---- Timing for Matching (Done on the graph constructed with the treshold constraint) ----")
 print(timing_match,"seconds")
-print("The number of edges in the graph is:", treshold_graph_maximal.number_of_edges())
-print(matching_set)
+print("The number of edges in the graph is:", treshold_graph_maximal.number_of_edges(), "\n")
+
+
+print("The Matching Set is:", matching_set, "\n")
 
 
 out = one_to_n.collapse(matching_set)
-print(out)
+print("The cleaned matching is:", out, "\n")
 
 last = one_to_n.collapsed_dict(out)
-print(last)
+print("The de-duplicated final result is:", last, "\n")
