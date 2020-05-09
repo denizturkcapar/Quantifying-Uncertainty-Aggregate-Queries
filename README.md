@@ -84,9 +84,7 @@ The code structure is now as follows:
 
 1. Duplicate the "1" table to have a user inputted amount of duplicates
 
-2. Do the bipartite matching on that duplicated "1" table
-
-3. De-duplicate / Collapse the results to have a `1-n` matching that looks like follows:
+2. Do the bipartite matching on that duplicated "1" table. The resulting output would look like this:
 
 Resulting Matching Excerpt:
 
@@ -94,7 +92,9 @@ USA_1 ------> US
 
 USA_2 ------> U.S.A
 
-Collapsing the duplicates would look like this:
+3. De-duplicate / Collapse the results to have a `1-n` matching that looks like follows:
+
+Collapsing the duplicates:
 
 USA ---> US_probability, U.S.A_probability
 
