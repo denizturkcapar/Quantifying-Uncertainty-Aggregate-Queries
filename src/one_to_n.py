@@ -45,8 +45,8 @@ def create_duplicates(df, col, num):
 	for i, row in df_repeated.iterrows():
 		df_repeated.loc[i, col] = row[col]+'_'+str(i//n)
 
-	print(df_repeated)
-	return None
+#	print(df_repeated)
+	return df_repeated
 
 
 
@@ -126,7 +126,7 @@ def treshold_updated_maximal_construct_graph(file_one, file_n, treshold_decimal)
     table_b_unprocessed = convert_df(file_n)
     bipartite_graph = nx.Graph()
     
-    duplicated = create_duplicates(table_a_unprocessed, 3) # Assuming that the user inputs 3 duplicates
+    table_a_unprocessed = create_duplicates(table_a_unprocessed, "aa", 3) # Assuming that the user inputs 3 duplicates
 
     table_a = make_dict(table_a_unprocessed)
     table_b = make_dict(table_b_unprocessed)
@@ -134,20 +134,25 @@ def treshold_updated_maximal_construct_graph(file_one, file_n, treshold_decimal)
     i=0
     
     for key1, val1 in table_a.items():
-        comp_point_1 = val1[0]
+        comp_point_1 = key1
       #  print(comp_point_1)
-        id1 = str(key1) + '_'+ str(comp_point_1) + '_1'
+      #  print(comp_point_1)
 
+        id1 = str(key1) + '_'+ str(val1) + '_1'
+      #  print(id1)
         for key2, val2 in table_b.items():
-            comp_point_2 = val2[0]
+            comp_point_2 = key2
+       #     print(comp_point_2)
             dist = calc_max_weight_edit(str(comp_point_1).lower(),str(comp_point_2).lower())
+            print(dist)
             i+=1
             if i%100000 == 0:
-                print(str(round(100*i/len(table_a)/len(table_b),2))+'% complete')
-            if dist >= treshold_decimal:
+                print(str(round(100*i/len(file_one)/len(file_n),2))+'% complete')
+            if dist <= treshold_decimal:
               #  print(key1,key2,dist)
                 #add value to identifier to disitnguish two entries with different values
-                id2 = str(key2) + '_' + str(comp_point_2) + '_2' 
+                id2 = str(key2) + '_' + str(val1) + '_2' + "_" + str(dist)
+                print("here")
                 bipartite_graph.add_edge(id1, id2, weight=dist)
                 #edit distance and weight should be inv. prop.
                 #also adding 1 to denom. to prevent divide by 0
@@ -156,3 +161,61 @@ def treshold_updated_maximal_construct_graph(file_one, file_n, treshold_decimal)
                 continue
             
     return bipartite_graph
+
+"""
+Retrieves the keys that are going to be compared for the matching with the perfect mapping to evaluate the accuracy.
+
+Input: Matching should be of type tuples inside a set.
+Output: A tuple of matchings. Ex: ((idDBLP_1, idACM_1))
+"""
+
+def collapse(matching_set):
+	res2 = list(matching_set)
+	res_tuple = []
+	for i in res2:
+	#	print(i)
+		if i[0].split("_")[1].isdigit() == True:
+
+			if int(i[0].split("_")[3]) == 1:
+				idACM = i[0].split("_")[0] + "_1"
+				idDBLP = i[1].split("_")[0]
+				res_tuple.append((idDBLP, idACM))
+
+		if i[1].split("_")[1].isdigit() == True:
+
+			if int(i[0].split("_")[2]) == 1:
+				idACM = i[1].split("_")[0] + "_1"
+				idDBLP = i[0].split("_")[0]
+				res_tuple.append((idDBLP, idACM))
+
+	return res_tuple
+
+	def collapsed_dict(res):
+		out = dict(res)
+		return out
+"""
+		if int(i[0].split("_")[2]) == 1:
+			idACM = i[0].split("_")[0]
+			idDBLP = i[1].split("_")[0]
+			res_tuple.append((idDBLP, idACM))
+        if int(i[0].split("_")[2]) == 2:
+        	idACM = i[1].split("_")[0]
+        	idDBLP = i[0].split("_")[0]
+        	res_tuple.append((idDBLP, idACM))
+
+    return res_tuple
+
+			
+			if int(i[0].split("_")[3]) == 2:
+				idACM = i[1].split("_")[0]
+				idDBLP = i[0].split("_")[0]
+				res_tuple.append((idDBLP, idACM))
+					
+			if int(i[0].split("_")[2]) == 2:
+				idACM = i[1].split("_")[0]
+				idDBLP = i[0].split("_")[0]
+				res_tuple.append((idDBLP, idACM))
+			
+"""
+
+
