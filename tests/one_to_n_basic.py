@@ -33,10 +33,11 @@ timing_match = (datetime.datetime.now()-now).total_seconds()
 print("---- Timing for Matching (Done on the graph constructed with the treshold constraint) ----")
 print(timing_match,"seconds")
 print("The number of edges in the graph is:", treshold_graph_maximal.number_of_edges())
-#print(matching_set)
+print(matching_set)
 
 
 out = one_to_n.collapse(matching_set)
 print(out)
+
 last = one_to_n.collapsed_dict(out)
 print(last)

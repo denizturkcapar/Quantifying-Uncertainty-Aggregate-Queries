@@ -6,6 +6,7 @@ import textdistance
 import editdistance
 import pandas as pd
 import networkx as nx
+import collections
 
 
 """
@@ -135,24 +136,17 @@ def treshold_updated_maximal_construct_graph(file_one, file_n, treshold_decimal)
     
     for key1, val1 in table_a.items():
         comp_point_1 = key1
-      #  print(comp_point_1)
-      #  print(comp_point_1)
 
         id1 = str(key1) + '_'+ str(val1) + '_1'
-      #  print(id1)
         for key2, val2 in table_b.items():
             comp_point_2 = key2
-       #     print(comp_point_2)
             dist = calc_max_weight_edit(str(comp_point_1).lower(),str(comp_point_2).lower())
-            print(dist)
             i+=1
             if i%100000 == 0:
                 print(str(round(100*i/len(file_one)/len(file_n),2))+'% complete')
             if dist <= treshold_decimal:
-              #  print(key1,key2,dist)
                 #add value to identifier to disitnguish two entries with different values
                 id2 = str(key2) + '_' + str(val1) + '_2' + "_" + str(dist)
-                print("here")
                 bipartite_graph.add_edge(id1, id2, weight=dist)
                 #edit distance and weight should be inv. prop.
                 #also adding 1 to denom. to prevent divide by 0
@@ -180,6 +174,10 @@ def collapse(matching_set):
 				idACM = i[0].split("_")[0] + "_1"
 				idDBLP = i[1].split("_")[0]
 				res_tuple.append((idDBLP, idACM))
+			if int(i[0].split("_")[3]) == 2:
+				idACM = i[1].split("_")[0] + "_1"
+				idDBLP = i[0].split("_")[0]
+				res_tuple.append((idDBLP, idACM))
 
 		if i[1].split("_")[1].isdigit() == True:
 
@@ -187,12 +185,22 @@ def collapse(matching_set):
 				idACM = i[1].split("_")[0] + "_1"
 				idDBLP = i[0].split("_")[0]
 				res_tuple.append((idDBLP, idACM))
+			if int(i[0].split("_")[2]) == 2:
+				idACM = i[1].split("_")[0] + "_1"
+				idDBLP = i[0].split("_")[0]
+				res_tuple.append((idDBLP, idACM))
 
 	return res_tuple
 
-	def collapsed_dict(res):
-		out = dict(res)
-		return out
+def collapsed_dict(res):
+	out = collections.defaultdict(list)
+	for (val, key) in res:
+		print(val,key)
+	#	if key not in out:
+	#		out[key] = val
+	#	else:
+		out[key].append(str(val))
+	return out
 """
 		if int(i[0].split("_")[2]) == 1:
 			idACM = i[0].split("_")[0]
@@ -211,10 +219,7 @@ def collapse(matching_set):
 				idDBLP = i[0].split("_")[0]
 				res_tuple.append((idDBLP, idACM))
 					
-			if int(i[0].split("_")[2]) == 2:
-				idACM = i[1].split("_")[0]
-				idDBLP = i[0].split("_")[0]
-				res_tuple.append((idDBLP, idACM))
+
 			
 """
 
