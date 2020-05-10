@@ -46,3 +46,7 @@ print("The cleaned matching is:", out, "\n")
 
 last = one_to_n.collapsed_dict(out)
 print("The de-duplicated final result is:", last, "\n")
+
+
+check = one_to_n.more_than_one(last)
+print("The non 1:n matchings found in this dataset are:", check, "\n")
