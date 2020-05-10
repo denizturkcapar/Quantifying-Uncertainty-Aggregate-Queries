@@ -106,7 +106,7 @@ The updated code structure is now as follows:
 
 - There are 2 test files:
 
-  - The `one_to_n_basic.py` file contains tests that check whether the functions in the core module are working correctly.
+  - The `one_to_n_basic.py` file contains tests that check whether the functions in the `1-n` module are working correctly.
 
-  - The `one_to_n_advanced.py` file contains tests that evaluate the precision and accuracy of the matchings according to the perfect mapping that is provided as an example in this file.
+  - The `one_to_n_advanced.py` file contains tests that evaluate the efficiency of the `1-n` matching for the large dataset example `DBLP-ACM` dataset.
 
