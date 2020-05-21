@@ -113,11 +113,11 @@ The updated code structure is now as follows:
 # Tasks after Meeting 05.15.2020
 ## Investigate the Transitive Closure Problem for 1 Table.
 
-### The source file for the work is aggrafated in `src/transitive_closure.py` and the tests are aggragated in `tests/transitive_basic.py` and `tests/transitive_advanced.py`. The latter file is still in the works with the hope of finishing it once the problem is solved using the small scale data that covers all the edge cases. 
+- The source file for the work is aggragated in `src/transitive_closure.py` and the tests are aggragated in `tests/transitive_basic.py` and `tests/transitive_advanced.py`. The latter file is still in the works with the hope of finishing it once the problem is solved using the small scale data that covers all the edge cases. 
 
-# Transitive Closure Problem in 1 Table
+## Transitive Closure Problem in 1 Table
 
-## Problem Statement: Assume that we have many of the same entities in different representations in the same column of the table. We want to find a way to indicate that they are the same entities by mapping them.
+### Problem Statement: Assume that we have many of the same entities in different representations in the same column of the table. We want to find a way to indicate that they are the same entities by mapping them.
 
 For example, assume the following table:
 
