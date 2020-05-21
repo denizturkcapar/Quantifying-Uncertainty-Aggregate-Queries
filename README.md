@@ -122,9 +122,11 @@ The updated code structure is now as follows:
 For example, assume the following table:
 
 Table A  |
+
 _________|
 
 Countries|
+
 _________|
 
 USA
