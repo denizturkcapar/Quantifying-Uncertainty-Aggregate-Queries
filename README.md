@@ -110,3 +110,43 @@ The updated code structure is now as follows:
 
   - The `one_to_n_advanced.py` file contains tests that evaluate the efficiency of the `1-n` matching for the large dataset example `DBLP-ACM` dataset.
 
+# Tasks after Meeting 05.15.2020
+## Investigate the Transitive Closure Problem for 1 Table.
+
+### The source file for the work is aggrafated in `src/transitive_closure.py` and the tests are aggragated in `tests/transitive_basic.py` and `tests/transitive_advanced.py`. The latter file is still in the works with the hope of finishing it once the problem is solved using the small scale data that covers all the edge cases. 
+
+# Transitive Closure Problem in 1 Table
+
+## Problem Statement: Assume that we have many of the same entities in different representations in the same column of the table. We want to find a way to indicate that they are the same entities by mapping them.
+
+For example, assume the following table:
+
+Table A  |
+_________|
+
+Countries|
+_________|
+
+USA
+
+US
+
+CHINA
+
+CHNA
+
+CANADA
+
+The matching outcome we want is the following:
+
+Table A       (Duplicated Table A)
+
+USA ---------- US
+
+US  ---------  USA
+
+CHINA ------- CHNA 
+
+CHNA -------- CHINA           
+
+CANADA ---X-- CANADA
