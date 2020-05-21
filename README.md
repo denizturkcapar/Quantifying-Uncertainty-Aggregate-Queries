@@ -152,3 +152,7 @@ CHINA ------- CHNA
 CHNA -------- CHINA           
 
 CANADA ---X-- CANADA
+
+The ultimate de-duplicated outcome we want is the following:
+
+(USA, US), (CHINA: CHNA)
