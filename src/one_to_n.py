@@ -254,10 +254,10 @@ Input: The output received from collapsed() function
 Output: A dictionary that has the key as the de-duplicated entries and the values as the "n" table values that they got matched
 """
 def collapsed_dict(res):
-	out = collections.defaultdict(list)
-	for (val, key) in res:
-		out[key].append(str(val))
-	return out
+    out = collections.defaultdict(list)
+    for (val, key) in res:
+        out[key].append(str(val))
+    return out
 
 """
 
@@ -273,6 +273,93 @@ def more_than_one(dic):
 		if len(val) > 1:
 			out2.append((key,val))
 	return(out2)
+
+"""
+*************************************************************************
+Fall Quarter Updates
+*************************************************************************
+Maximal and Minimal Matching for SUM Operation
+"""
+
+def make_dict_specific_col(file, col_index):
+    V = list(file.to_dict('list').values())
+    keys = V[0]
+    values = V[col_index]
+    table = dict(zip(keys,values))
+    return table
+
+def create_val_lookup(file_1, file_n, col_index):
+    lookup = make_dict_specific_col(file_1, col_index)
+    lookup_update = make_dict_specific_col(file_n, col_index)
+    lookup.update(lookup_update)
+    return lookup
+
+def SUM_result_with_uncertainties(max_out, min_out, lookup):
+    max_cumulative_sum = {}    
+    min_cumulative_sum = {}
+    formal_output = {}
+
+    # Calculations for maximum interval using maximal matching results
+    for key, val in max_out.items():
+
+        true_key = key.split("_")[0]
+        if true_key in lookup and not max_cumulative_sum:
+            max_cumulative_sum[key] = int(lookup[key])
+            if true_key not in formal_output:
+                formal_output[true_key] = []
+            continue
+        if true_key in lookup and min_cumulative_sum:
+            max_cumulative_sum[key] += int(lookup[key])
+            if true_key not in formal_output:
+                formal_output[true_key] = []
+            continue
+        else:
+            if true_key not in formal_output:
+                formal_output[true_key] = []
+            continue
+
+    #Calculations for minimum interval using minimal matching results
+    for key, val in min_out.items():
+
+        true_key = key.split("_")[0]
+        if true_key in lookup and not min_cumulative_sum:
+            min_cumulative_sum[key] = int(lookup[key])
+            if true_key not in formal_output:
+                formal_output[true_key] = []
+            continue
+        if true_key in lookup and min_cumulative_sum:
+            min_cumulative_sum[key] += int(lookup[key])
+            if true_key not in formal_output:
+                formal_output[true_key] = []
+            continue
+        else:
+            continue
+
+    # Format output as following: {USA : [ [US], [USAA, US, UK], [5], [100] ], ...}
+    for key, val in min_out.items():
+        true_key = key.split("_")[0]
+        if true_key in formal_output:
+            formal_output[true_key].append([min_out[true_key]])
+
+    for key, val in max_out.items():
+        true_key = key.split("_")[0]
+        if true_key in formal_output:
+            formal_output[true_key].append([max_out[true_key]])
+    
+    for key, val in min_cumulative_sum.items():
+        true_key = key.split("_")[0]
+        if true_key in formal_output:
+            formal_output[true_key].append([min_cumulative_sum[true_key]])
+
+    for key, val in max_cumulative_sum.items():
+        true_key = key.split("_")[0]
+        if true_key in formal_output:
+            formal_output[true_key].append([max_cumulative_sum[true_key]])
+
+    return formal_output
+
+
+
 
 
 
