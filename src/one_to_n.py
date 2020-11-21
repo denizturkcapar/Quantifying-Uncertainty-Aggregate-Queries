@@ -331,6 +331,7 @@ def SUM_result_with_uncertainties(max_out, min_out, lookup):
             continue
         else:
             continue
+    return(min_cumulative_sum, max_cumulative_sum)
 
 
 
