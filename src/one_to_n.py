@@ -297,7 +297,6 @@ def create_val_lookup(file_1, file_n, col_index):
 def SUM_result_with_uncertainties(max_out, min_out, lookup):
     max_cumulative_sum = {}    
     min_cumulative_sum = {}
-    formal_output = {}
 
     # Calculations for maximum interval using maximal matching results
     for key, val in max_out.items():
@@ -305,8 +304,6 @@ def SUM_result_with_uncertainties(max_out, min_out, lookup):
         true_key = key.split("_")[0]
         if true_key in lookup and not max_cumulative_sum:
             max_cumulative_sum[key] = int(lookup[key])
-            if true_key not in formal_output:
-                formal_output[true_key] = []
             continue
         if true_key in lookup and min_cumulative_sum:
             max_cumulative_sum[key] += int(lookup[key])
@@ -335,16 +332,25 @@ def SUM_result_with_uncertainties(max_out, min_out, lookup):
         else:
             continue
 
+
+
+def form_formal_output(min_out, max_out, min_dict, max_dict):
+    formal_output = {}
+
     # Format output as following: {USA : [ [US], [USAA, US, UK], [5], [100] ], ...}
     for key, val in min_out.items():
         true_key = key.split("_")[0]
         if true_key in formal_output:
             formal_output[true_key].append([min_out[true_key]])
+        else:
+            formal_output[true_key] = []
 
     for key, val in max_out.items():
         true_key = key.split("_")[0]
         if true_key in formal_output:
             formal_output[true_key].append([max_out[true_key]])
+        else:
+            formal_output[true_key] = []
     
     for key, val in min_cumulative_sum.items():
         true_key = key.split("_")[0]
@@ -357,9 +363,6 @@ def SUM_result_with_uncertainties(max_out, min_out, lookup):
             formal_output[true_key].append([max_cumulative_sum[true_key]])
 
     return formal_output
-
-
-
 
 
 
