@@ -121,13 +121,15 @@ def make_dict(file):
 
 
 """
-
+*****************************************************************
+MAXIMAL MATCHING
+*****************************************************************
 Constructs a maximal bipartite graph of the given two tables according to the treshold similarity.
 The bipartite matching graph only includes those that have passed a certain similarity treshold.
 The similarity metric takes into account the **keys** in this implementation
 
 Input: Any 2 files in any format
-Output: A Bipartite Graph with Minimal Weights
+Output: A Bipartite Graph with Maximal Weights
 """
 def keycomp_treshold_updated_maximal_construct_graph(file_one, file_n, col_to_dup, treshold_decimal):
     table_a_unprocessed = convert_df(file_one)
@@ -170,9 +172,99 @@ The bipartite matching graph only includes those that have passed a certain simi
 The similarity metric takes into account the **values** in this implementation
 
 Input: Any 2 files in any format
-Output: A Bipartite Graph with Minimal Weights
+Output: A Bipartite Graph with Maximal Weights
 """
 def valcomp_treshold_updated_maximal_construct_graph(file_one, file_n, treshold_decimal):
+    table_a_unprocessed = convert_df(file_one)
+    table_b_unprocessed = convert_df(file_n)
+    bipartite_graph = nx.Graph()
+
+    table_a_unprocessed = create_duplicates(table_a_unprocessed, "id", 3) # Assuming that the user inputs 3 duplicates
+    
+    table_a = make_dict(table_a_unprocessed)
+    table_b = make_dict(table_b_unprocessed)
+    
+    i=0
+    
+    for key1, val1 in table_a.items():
+        comp_point_1 = val1[0]
+      #  print(comp_point_1)
+        id1 = str(key1) + '_'+ str(comp_point_1) + '_1'
+
+        for key2, val2 in table_b.items():
+            comp_point_2 = val2[0]
+            dist = calc_min_weight_edit(str(comp_point_1).lower(),str(comp_point_2).lower())
+            i+=1
+            if i%100000 == 0:
+                print(str(round(100*i/len(table_a)/len(table_b),2))+'% complete')
+            if dist >= treshold_decimal:
+              #  print(key1,key2,dist)
+                #add value to identifier to disitnguish two entries with different values
+                id2 = str(key2) + '_' + str(comp_point_2) + '_2' 
+                bipartite_graph.add_edge(id1, id2, weight=dist)
+                #edit distance and weight should be inv. prop.
+                #also adding 1 to denom. to prevent divide by 0
+                # add 1,2 to distinguish two key-value tuples belonging to different tables
+            else:
+                continue
+            
+    return bipartite_graph
+
+"""
+*******************************************************************
+MINIMAL MATCHING
+*******************************************************************
+Constructs a minimal bipartite graph of the given two tables according to the treshold similarity.
+The bipartite matching graph only includes those that have passed a certain similarity treshold.
+The similarity metric takes into account the **keys** in this implementation
+
+Input: Any 2 files in any format
+Output: A Bipartite Graph with Minimal Weights
+"""
+def keycomp_treshold_updated_minimal_construct_graph(file_one, file_n, col_to_dup, treshold_decimal):
+    table_a_unprocessed = convert_df(file_one)
+    table_b_unprocessed = convert_df(file_n)
+    bipartite_graph = nx.Graph()
+    
+    table_a_unprocessed = create_duplicates(table_a_unprocessed, col_to_dup, 3) # Assuming that the user inputs 3 duplicates
+
+    table_a = make_dict(table_a_unprocessed)
+    table_b = make_dict(table_b_unprocessed)
+    
+    i=0
+    
+    for key1, val1 in table_a.items():
+        comp_point_1 = key1
+
+        id1 = str(key1) + '_'+ str(val1) + '_1'
+        for key2, val2 in table_b.items():
+            comp_point_2 = key2
+            dist = calc_min_weight_edit(str(comp_point_1).lower(),str(comp_point_2).lower())
+            i+=1
+            if i%100000 == 0:
+                print(str(round(100*i/len(file_one)/len(file_n),2))+'% complete')
+            if dist <= treshold_decimal:
+                #add value to identifier to disitnguish two entries with different values
+                id2 = str(key2) + '_' + str(val2) + '_2' + "_" + str(dist)
+                bipartite_graph.add_edge(id1, id2, weight=dist)
+                #edit distance and weight should be inv. prop.
+                #also adding 1 to denom. to prevent divide by 0
+                # add 1,2 to distinguish two key-value tuples belonging to different tables
+            else:
+                continue
+            
+    return bipartite_graph
+
+"""
+
+Constructs a manimal bipartite graph of the given two tables according to the treshold similarity.
+The bipartite matching graph only includes those that have passed a certain similarity treshold.
+The similarity metric takes into account the **values** in this implementation
+
+Input: Any 2 files in any format
+Output: A Bipartite Graph with Minimal Weights
+"""
+def valcomp_treshold_updated_minimal_construct_graph(file_one, file_n, treshold_decimal):
     table_a_unprocessed = convert_df(file_one)
     table_b_unprocessed = convert_df(file_n)
     bipartite_graph = nx.Graph()
@@ -207,8 +299,6 @@ def valcomp_treshold_updated_maximal_construct_graph(file_one, file_n, treshold_
                 continue
             
     return bipartite_graph
-
-
 """
 
 Retrieves the keys that are going to be compared for the matching with the perfect mapping to evaluate the accuracy.
