@@ -476,20 +476,20 @@ def form_formal_output(min_final, max_final, min_cumulative_sum, max_cumulative_
     print(max_cumulative_sum)
 
     # Format output as following: {USA : [ [US], [USAA, US, UK], [5], [100] ], ...}
-    for key, val in min_final.items():
+    for key, vals in min_final.items():
         true_key = key.split("_")[0]
         # if true_key in formal_output:
         #     formal_output[true_key].append([min_out[true_key]])
         # else:
-        formal_output[true_key] = []
+        formal_output[true_key] = [vals]
     # print(formal_output)
     # print(formal_output['AU'].append(['19']))
     # print(formal_output['AU'].append(['20']))
     # print(formal_output)
-    for key, val in max_final.items():
+    for key, vals in max_final.items():
         true_key = key.split("_")[0]
         if true_key in formal_output:
-            # formal_output[true_key].append([max_final[true_key]])
+            formal_output[true_key].append([vals])
             continue
         else:
             formal_output[true_key] = []

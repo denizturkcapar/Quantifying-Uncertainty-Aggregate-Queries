@@ -102,4 +102,5 @@ print("\n\n UNCERTAINTY QUANTIFICATION")
 lookup = one_to_n.create_val_lookup(table_a, table_b, 2)
 (min_sum, max_sum) = one_to_n.SUM_result_with_uncertainties(max_final, min_final, lookup)
 final_uncertainty = one_to_n.form_formal_output(min_final, max_final, min_sum, max_sum)
-print(final_uncertainty)
+for k, v in final_uncertainty.items():
+	print (k, '-->', v)
