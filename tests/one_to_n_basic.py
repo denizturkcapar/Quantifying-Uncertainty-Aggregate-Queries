@@ -16,7 +16,7 @@ repeat = one_to_n.create_duplicates(table_a, "aa", 3)
 print("The duplicated table is as follows:\n", repeat, "\n")
 
 now = datetime.datetime.now()
-treshold_graph_maximal = one_to_n.keycomp_treshold_updated_maximal_construct_graph(table_a, table_b, "aa", 0.5)
+treshold_graph_maximal = one_to_n.keycomp_treshold_updated_maximal_construct_graph(table_a, table_b, "aa", -0.5)
 timing_tresh = (datetime.datetime.now()-now).total_seconds()
 print("---- Timing for Graph Construction with Treshold Constraint ----")
 print(timing_tresh,"seconds")

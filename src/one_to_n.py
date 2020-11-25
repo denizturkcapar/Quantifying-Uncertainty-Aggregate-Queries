@@ -242,8 +242,8 @@ def keycomp_treshold_updated_minimal_construct_graph(file_one, file_n, col_to_du
             dist = calc_min_weight_edit(str(comp_point_1).lower(),str(comp_point_2).lower())
             i+=1
             if i%100000 == 0:
-                print(str(round(100*i/len(file_one)/len(file_n),2))+'% complete')
-            if dist <= treshold_decimal:
+                print(str(round(100*i/len(table_a)/len(table_b),2))+'% complete')
+            if dist >= treshold_decimal:
                 #add value to identifier to disitnguish two entries with different values
                 id2 = str(key2) + '_' + str(val2) + '_2' + "_" + str(dist)
                 bipartite_graph.add_edge(id1, id2, weight=dist)
@@ -252,7 +252,6 @@ def keycomp_treshold_updated_minimal_construct_graph(file_one, file_n, col_to_du
                 # add 1,2 to distinguish two key-value tuples belonging to different tables
             else:
                 continue
-            
     return bipartite_graph
 
 """
@@ -335,6 +334,35 @@ def collapse(matching_set):
 
 	return res_tuple
 
+
+def collapse2(matching_set):
+    res2 = list(matching_set.items())
+    res_tuple = []
+    for i in res2:
+
+        if i[0].split("_")[1].isdigit() == True:
+
+            if i[0].split("_")[3] == "1":
+                idACM = i[0].split("_")[0] + "_1"
+                idDBLP = i[1].split("_")[0]
+                res_tuple.append((idDBLP, idACM))
+            if i[0].split("_")[3] == "2":
+                idACM = i[1].split("_")[0] + "_1"
+                idDBLP = i[0].split("_")[0]
+                res_tuple.append((idDBLP, idACM))
+
+        if i[1].split("_")[1].isdigit() == True:
+
+            if i[0].split("_")[2] == "1":
+                idACM = i[1].split("_")[0] + "_1"
+                idDBLP = i[0].split("_")[0]
+                res_tuple.append((idDBLP, idACM))
+            if i[0].split("_")[2] == "2":
+                idACM = i[1].split("_")[0] + "_1"
+                idDBLP = i[0].split("_")[0]
+                res_tuple.append((idDBLP, idACM))
+
+    return res_tuple
 """
 
 Collapse the results further to a dictionary format. I've made it optional as a separate function for now.
@@ -370,13 +398,17 @@ Fall Quarter Updates
 *************************************************************************
 Maximal and Minimal Matching for SUM Operation
 """
-
+"""
+Helper function for create_val_lookup. 
+Returns a dictionary of specified column index
+"""
 def make_dict_specific_col(file, col_index):
     V = list(file.to_dict('list').values())
     keys = V[0]
     values = V[col_index]
     table = dict(zip(keys,values))
     return table
+
 
 def create_val_lookup(file_1, file_n, col_index):
     lookup = make_dict_specific_col(file_1, col_index)
@@ -389,57 +421,76 @@ def SUM_result_with_uncertainties(max_out, min_out, lookup):
     min_cumulative_sum = {}
 
     # Calculations for maximum interval using maximal matching results
-    for key, val in max_out.items():
+    for key, vals in max_out.items():
+
 
         true_key = key.split("_")[0]
-        if true_key in lookup and not max_cumulative_sum:
-            max_cumulative_sum[key] = int(lookup[key])
-            continue
-        if true_key in lookup and min_cumulative_sum:
-            max_cumulative_sum[key] += int(lookup[key])
-            if true_key not in formal_output:
-                formal_output[true_key] = []
+        # print(true_key)
+        # print(int(lookup[true_key]))
+        # print(true_key, val)
+        if true_key not in max_cumulative_sum:
+            # print(lookup[true_key])
+            # print(max_cumulative_sum[true_key])
+            # print(lookup[true_key])
+            max_cumulative_sum[true_key] = int(lookup[true_key])
             continue
         else:
-            if true_key not in formal_output:
-                formal_output[true_key] = []
+            max_cumulative_sum[true_key] += int(lookup[true_key])
+            # if true_key not in formal_output:
+            #     formal_output[true_key] = []
             continue
+        for val in vals:
+            if val in lookup:
+                max_cumulative_sum[true_key] += int(lookup[val])
+        # else:
+        #     # if true_key not in formal_output:
+        #     #     formal_output[true_key] = []
+        #     continue
 
     #Calculations for minimum interval using minimal matching results
     for key, val in min_out.items():
 
         true_key = key.split("_")[0]
-        if true_key in lookup and not min_cumulative_sum:
-            min_cumulative_sum[key] = int(lookup[key])
-            if true_key not in formal_output:
-                formal_output[true_key] = []
-            continue
-        if true_key in lookup and min_cumulative_sum:
-            min_cumulative_sum[key] += int(lookup[key])
-            if true_key not in formal_output:
-                formal_output[true_key] = []
+        if true_key not in min_cumulative_sum:
+            min_cumulative_sum[true_key] = int(lookup[true_key])
+            # if true_key not in formal_output:
+            #     formal_output[true_key] = []
             continue
         else:
+            min_cumulative_sum[true_key] += int(lookup[true_key])
+            # if true_key not in formal_output:
+            #     formal_output[true_key] = []
             continue
+        # else:
+        #     continue
+        for val in vals:
+            if val in lookup:
+                max_cumulative_sum[true_key] += int(lookup[val])
     return(min_cumulative_sum, max_cumulative_sum)
 
 
 
-def form_formal_output(min_out, max_out, min_dict, max_dict):
+def form_formal_output(min_final, max_final, min_cumulative_sum, max_cumulative_sum):
     formal_output = {}
+    print(min_cumulative_sum)
+    print(max_cumulative_sum)
 
     # Format output as following: {USA : [ [US], [USAA, US, UK], [5], [100] ], ...}
-    for key, val in min_out.items():
+    for key, val in min_final.items():
+        true_key = key.split("_")[0]
+        # if true_key in formal_output:
+        #     formal_output[true_key].append([min_out[true_key]])
+        # else:
+        formal_output[true_key] = []
+    # print(formal_output)
+    # print(formal_output['AU'].append(['19']))
+    # print(formal_output['AU'].append(['20']))
+    # print(formal_output)
+    for key, val in max_final.items():
         true_key = key.split("_")[0]
         if true_key in formal_output:
-            formal_output[true_key].append([min_out[true_key]])
-        else:
-            formal_output[true_key] = []
-
-    for key, val in max_out.items():
-        true_key = key.split("_")[0]
-        if true_key in formal_output:
-            formal_output[true_key].append([max_out[true_key]])
+            # formal_output[true_key].append([max_final[true_key]])
+            continue
         else:
             formal_output[true_key] = []
     
@@ -455,5 +506,6 @@ def form_formal_output(min_out, max_out, min_dict, max_dict):
 
     return formal_output
 
+# Add min_countries, max_countries before the numbers part
 
 
