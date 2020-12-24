@@ -7,6 +7,17 @@ import editdistance
 import pandas as pd
 import networkx as nx
 import collections
+import math
+
+
+
+def string_sets(word):
+    return(set(word.lower().split()))
+
+def calc_jaccard(amazon_titles, google_titles):
+    set_google = string_sets(google_titles)
+    set_amazon = string_sets(amazon_titles)
+    return len(set_amazon.intersection(set_google))/len(set_amazon.union(set_google))
 
 
 """
@@ -56,8 +67,6 @@ def create_duplicates(df, col, num):
 #	print(df_repeated)
 	return df_repeated
 
-
-
 """
 
 Calculates maximum weight for the matching
@@ -66,7 +75,9 @@ Input: keys from 2 tables
 Output: weight for each matching to be used in the weight part of constructing the graph
 """
 def calc_max_weight(key1, key2):
-    weight = textdistance.jaccard(key1,key2) #this library's implementation is slower than jaccard_similarity()
+
+    weight = (1)/(1+calc_jaccard(key1,key2)) #this library's implementation is slower than jaccard_similarity()
+    # print(weight)
     return weight
 
 """
@@ -88,7 +99,11 @@ Input: keys from 2 tables
 Output: weight for each matching to be used in the weight part of constructing the graph
 """
 def calc_max_weight_edit(key1, key2):
+    # print(key1)
+    # print(key2)
+    # print(editdistance.eval(key1,key2))
     weight = (1)/(1+editdistance.eval(key1,key2))
+    print(weight)
     return weight
 
 """
@@ -99,7 +114,7 @@ Input: keys from 2 tables
 Output: weight for each matching to be used in the weight part of constructing the graph
 """
 def calc_min_weight_edit(key1, key2):
-    weight = (-1)/(1+editdistance.eval(key1,key2))
+    weight = (1)/(1+editdistance.eval(key1,key2))
     return weight
 
 
@@ -144,18 +159,20 @@ def keycomp_treshold_updated_maximal_construct_graph(file_one, file_n, col_to_du
     i=0
     
     for key1, val1 in table_a.items():
-        comp_point_1 = key1
+        comp_point_1 = key1.split("_")[0]
 
         id1 = str(key1) + '_'+ str(val1) + '_1'
         for key2, val2 in table_b.items():
-            comp_point_2 = key2
+
+            comp_point_2 = key2.split("_")[0]
             dist = calc_max_weight_edit(str(comp_point_1).lower(),str(comp_point_2).lower())
             i+=1
             if i%100000 == 0:
                 print(str(round(100*i/len(file_one)/len(file_n),2))+'% complete')
             if dist <= treshold_decimal:
+                print(comp_point_1, comp_point_2, dist)
                 #add value to identifier to disitnguish two entries with different values
-                id2 = str(key2) + '_' + str(val2) + '_2' + "_" + str(dist)
+                id2 = str(key2) + '_' + str(val2) + '_2' + "_" 
                 bipartite_graph.add_edge(id1, id2, weight=dist)
                 #edit distance and weight should be inv. prop.
                 #also adding 1 to denom. to prevent divide by 0
@@ -174,33 +191,34 @@ The similarity metric takes into account the **values** in this implementation
 Input: Any 2 files in any format
 Output: A Bipartite Graph with Maximal Weights
 """
-def valcomp_treshold_updated_maximal_construct_graph(file_one, file_n, treshold_decimal):
+def valcomp_treshold_updated_maximal_construct_graph(file_one, file_n, col_to_dup, treshold_decimal):
     table_a_unprocessed = convert_df(file_one)
     table_b_unprocessed = convert_df(file_n)
     bipartite_graph = nx.Graph()
-
-    table_a_unprocessed = create_duplicates(table_a_unprocessed, "id", 3) # Assuming that the user inputs 3 duplicates
     
+    table_a_unprocessed = create_duplicates(table_a_unprocessed, col_to_dup, 3) # Assuming that the user inputs 3 duplicates
+
     table_a = make_dict(table_a_unprocessed)
     table_b = make_dict(table_b_unprocessed)
-    
+
     i=0
     
     for key1, val1 in table_a.items():
-        comp_point_1 = val1[0]
-      #  print(comp_point_1)
-        id1 = str(key1) + '_'+ str(comp_point_1) + '_1'
+        comp_point_1 = val1[0].split("_")[0]
 
+        id1 = str(key1) + '_'+ str(comp_point_1) + "_" + str(val1[3]) + '_1'
         for key2, val2 in table_b.items():
+
             comp_point_2 = val2[0]
-            dist = calc_min_weight_edit(str(comp_point_1).lower(),str(comp_point_2).lower())
+            dist = calc_jaccard(str(comp_point_1).lower(),str(comp_point_2).lower())
             i+=1
+            # print("first is: ", comp_point_1, "second is:", comp_point_2, "distance is:", dist)
             if i%100000 == 0:
-                print(str(round(100*i/len(table_a)/len(table_b),2))+'% complete')
+                print(str(round(100*i/len(file_one)/len(file_n),2))+'% complete')
             if dist >= treshold_decimal:
-              #  print(key1,key2,dist)
+                
                 #add value to identifier to disitnguish two entries with different values
-                id2 = str(key2) + '_' + str(comp_point_2) + '_2' 
+                id2 = str(key2) + '_' + str(comp_point_2) + "_" + str(val2[3]) + '_2'
                 bipartite_graph.add_edge(id1, id2, weight=dist)
                 #edit distance and weight should be inv. prop.
                 #also adding 1 to denom. to prevent divide by 0
@@ -238,25 +256,62 @@ def keycomp_treshold_updated_minimal_construct_graph(file_one, file_n, col_to_du
 
         id1 = str(key1) + '_'+ str(val1) + '_1'
         for key2, val2 in table_b.items():
+            print(key2, val2)
             comp_point_2 = key2
             dist = calc_min_weight_edit(str(comp_point_1).lower(),str(comp_point_2).lower())
             i+=1
             if i%100000 == 0:
                 print(str(round(100*i/len(table_a)/len(table_b),2))+'% complete')
             if dist >= treshold_decimal:
-                #add value to identifier to disitnguish two entries with different values
-                id2 = str(key2) + '_' + str(val2) + '_2' + "_" + str(dist)
+            #add value to identifier to disitnguish two entries with different values
+                id2 = str(key2) + '_' + str(val2) + '_2'
+                print("id is:", id2)
                 bipartite_graph.add_edge(id1, id2, weight=dist)
-                #edit distance and weight should be inv. prop.
-                #also adding 1 to denom. to prevent divide by 0
-                # add 1,2 to distinguish two key-value tuples belonging to different tables
+            #edit distance and weight should be inv. prop.
+            #also adding 1 to denom. to prevent divide by 0
+            # add 1,2 to distinguish two key-value tuples belonging to different tables
             else:
                 continue
     return bipartite_graph
 
-"""
+def simpler_min_graph_construct(file_one, file_n, col_to_dup):
+    table_a_unprocessed = convert_df(file_one)
+    table_b_unprocessed = convert_df(file_n)
+    bipartite_graph = nx.Graph()
+    
+    table_a_unprocessed = create_duplicates(table_a_unprocessed, col_to_dup, 3) # Assuming that the user inputs 3 duplicates
 
-Constructs a manimal bipartite graph of the given two tables according to the treshold similarity.
+    table_a = make_dict(table_a_unprocessed)
+    table_b = make_dict(table_b_unprocessed)
+    
+    i=0
+    
+    for key1, val1 in table_a.items():
+        comp_point_1 = key1
+
+        id1 = str(key1) + '_'+ str(val1) + '_1'
+        for key2, val2 in table_b.items():
+            print(key2, val2)
+            comp_point_2 = key2
+            dist = calc_max_weight_edit(str(comp_point_1).lower(),str(comp_point_2).lower())
+            i+=1
+            if i%100000 == 0:
+                print(str(round(100*i/len(table_a)/len(table_b),2))+'% complete')
+            # if dist <= treshold_decimal:
+            #add value to identifier to disitnguish two entries with different values
+            id2 = str(key2) + '_' + str(val2) + '_2'
+            print("id is:", id2)
+            bipartite_graph.add_edge(id1, id2, weight=dist)
+            #edit distance and weight should be inv. prop.
+            #also adding 1 to denom. to prevent divide by 0
+            # add 1,2 to distinguish two key-value tuples belonging to different tables
+            # else:
+            #     continue
+    return bipartite_graph
+
+"""
+(Appropriated inputs from keycomp_treshold_updated_minimal_construct_graph only for idBLP ACM dataset.)
+Constructs a minimal bipartite graph of the given two tables according to the treshold similarity.
 The bipartite matching graph only includes those that have passed a certain similarity treshold.
 The similarity metric takes into account the **values** in this implementation
 
@@ -282,12 +337,12 @@ def valcomp_treshold_updated_minimal_construct_graph(file_one, file_n, treshold_
 
         for key2, val2 in table_b.items():
             comp_point_2 = val2[0]
-            dist = calc_max_weight_edit(str(comp_point_1).lower(),str(comp_point_2).lower())
+            dist = calc_max_weight(str(comp_point_1).lower(),str(comp_point_2).lower())
             i+=1
             if i%100000 == 0:
                 print(str(round(100*i/len(table_a)/len(table_b),2))+'% complete')
             if dist >= treshold_decimal:
-              #  print(key1,key2,dist)
+                print(id1,id2,dist)
                 #add value to identifier to disitnguish two entries with different values
                 id2 = str(key2) + '_' + str(comp_point_2) + '_2' 
                 bipartite_graph.add_edge(id1, id2, weight=dist)
@@ -372,11 +427,17 @@ Input: The output received from collapsed() function
 Output: A dictionary that has the key as the de-duplicated entries and the values as the "n" table values that they got matched
 """
 def collapsed_dict(res):
-    out = collections.defaultdict(list)
+
+    out = collections.defaultdict(set)
     for (val, key) in res:
-        out[key].append(str(val))
+        # print("\n\n", val, key)
+        out[key].add(str(val))
     return out
 
+# def collapsed_minimal_dict(res):
+#     out = {}
+#     for (val, key) in res:
+#         out[key] = [val]
 """
 
 Identify the matchings that have the 1:n matching nature. Since this example uses a dataset that has a 1:1 nature
@@ -468,14 +529,173 @@ def SUM_result_with_uncertainties(max_out, min_out, lookup):
                 max_cumulative_sum[true_key] += int(lookup[val])
     return(min_cumulative_sum, max_cumulative_sum)
 
+def MIN_result_with_uncertainties(max_out, min_out, lookup):
+    max_cumulative_sum = {}    
+    min_cumulative_sum = {}
+
+    # Calculations for maximum interval using maximal matching results
+    for key, vals in max_out.items():
+
+
+        true_key = key.split("_")[0]
+        # print(true_key)
+        # print(int(lookup[true_key]))
+        # print(true_key, val)
+        if true_key not in max_cumulative_sum:
+            # print(lookup[true_key])
+            # print(max_cumulative_sum[true_key])
+            # print(lookup[true_key])
+            max_cumulative_sum[true_key] = int(lookup[true_key])
+            continue
+        else:
+            max_cumulative_sum[true_key] += int(lookup[true_key])
+            # if true_key not in formal_output:
+            #     formal_output[true_key] = []
+            continue
+        for val in vals:
+            if val in lookup:
+                max_cumulative_sum[true_key] += int(lookup[val])
+        # else:
+        #     # if true_key not in formal_output:
+        #     #     formal_output[true_key] = []
+        #     continue
+
+    #Calculations for minimum interval using minimal matching results
+    for key, val in min_out.items():
+
+        true_key = key.split("_")[0]
+        if true_key not in min_cumulative_sum:
+            min_cumulative_sum[true_key] = int(lookup[true_key])
+            # if true_key not in formal_output:
+            #     formal_output[true_key] = []
+            continue
+        else:
+            min_cumulative_sum[true_key] += int(lookup[true_key])
+            # if true_key not in formal_output:
+            #     formal_output[true_key] = []
+            continue
+        # else:
+        #     continue
+        for val in vals:
+            if val in lookup:
+                max_cumulative_sum[true_key] += int(lookup[val])
+    return(min_cumulative_sum, max_cumulative_sum)
+
+
+def MAX_result_with_uncertainties(max_out, min_out, lookup):
+    max_cumulative_sum = {}    
+    min_cumulative_sum = {}
+
+    # Calculations for maximum interval using maximal matching results
+    for key, vals in max_out.items():
+
+
+        true_key = key.split("_")[0]
+        # print(true_key)
+        # print(int(lookup[true_key]))
+        # print(true_key, val)
+        if true_key not in max_cumulative_sum:
+            # print(lookup[true_key])
+            # print(max_cumulative_sum[true_key])
+            # print(lookup[true_key])
+            max_cumulative_sum[true_key] = int(lookup[true_key])
+            continue
+        else:
+            max_cumulative_sum[true_key] += int(lookup[true_key])
+            # if true_key not in formal_output:
+            #     formal_output[true_key] = []
+            continue
+        for val in vals:
+            if val in lookup:
+                max_cumulative_sum[true_key] += int(lookup[val])
+        # else:
+        #     # if true_key not in formal_output:
+        #     #     formal_output[true_key] = []
+        #     continue
+
+    #Calculations for minimum interval using minimal matching results
+    for key, val in min_out.items():
+
+        true_key = key.split("_")[0]
+        if true_key not in min_cumulative_sum:
+            min_cumulative_sum[true_key] = int(lookup[true_key])
+            # if true_key not in formal_output:
+            #     formal_output[true_key] = []
+            continue
+        else:
+            min_cumulative_sum[true_key] += int(lookup[true_key])
+            # if true_key not in formal_output:
+            #     formal_output[true_key] = []
+            continue
+        # else:
+        #     continue
+        for val in vals:
+            if val in lookup:
+                max_cumulative_sum[true_key] += int(lookup[val])
+    return(min_cumulative_sum, max_cumulative_sum)
+
+
+def COUNT_result_with_uncertainties(max_out, min_out, lookup):
+    max_cumulative_sum = {}    
+    min_cumulative_sum = {}
+
+    # Calculations for maximum interval using maximal matching results
+    for key, vals in max_out.items():
+
+
+        true_key = key.split("_")[0]
+        # print(true_key)
+        # print(int(lookup[true_key]))
+        # print(true_key, val)
+        if true_key not in max_cumulative_sum:
+            # print(lookup[true_key])
+            # print(max_cumulative_sum[true_key])
+            # print(lookup[true_key])
+            max_cumulative_sum[true_key] = int(lookup[true_key])
+            continue
+        else:
+            max_cumulative_sum[true_key] += int(lookup[true_key])
+            # if true_key not in formal_output:
+            #     formal_output[true_key] = []
+            continue
+        for val in vals:
+            if val in lookup:
+                max_cumulative_sum[true_key] += int(lookup[val])
+        # else:
+        #     # if true_key not in formal_output:
+        #     #     formal_output[true_key] = []
+        #     continue
+
+    #Calculations for minimum interval using minimal matching results
+    for key, val in min_out.items():
+
+        true_key = key.split("_")[0]
+        if true_key not in min_cumulative_sum:
+            min_cumulative_sum[true_key] = int(lookup[true_key])
+            # if true_key not in formal_output:
+            #     formal_output[true_key] = []
+            continue
+        else:
+            min_cumulative_sum[true_key] += int(lookup[true_key])
+            # if true_key not in formal_output:
+            #     formal_output[true_key] = []
+            continue
+        # else:
+        #     continue
+        for val in vals:
+            if val in lookup:
+                max_cumulative_sum[true_key] += int(lookup[val])
+    return(min_cumulative_sum, max_cumulative_sum)
+
 
 
 def form_formal_output(min_final, max_final, min_cumulative_sum, max_cumulative_sum):
     formal_output = {}
-    print(min_cumulative_sum)
-    print(max_cumulative_sum)
+    # print(min_cumulative_sum)
+    # print(max_cumulative_sum)
 
     # Format output as following: {USA : [ [US], [USAA, US, UK], [5], [100] ], ...}
+
     for key, vals in min_final.items():
         true_key = key.split("_")[0]
         # if true_key in formal_output:
@@ -506,6 +726,26 @@ def form_formal_output(min_final, max_final, min_cumulative_sum, max_cumulative_
 
     return formal_output
 
-# Add min_countries, max_countries before the numbers part
+
+def SUM_edit_edge_weight(bip_graph):
+    for u,v,d in bip_graph.edges(data=True):
+        val_tuple_1 = u.split("_")
+        for i in val_tuple_1:
+            if i.startswith("("):
+                val1 = i.split(",")[0][1:]
+        val_tuple_2 = v.split("_")
+        for j in val_tuple_2:
+            if j.startswith("("):
+                val2 = j.split(",")[0][1:]
+        d['weight'] = int(val1) + int(val2)
+        # print("val1 is: ", val1)
+        # print("val2 is: ", val2)
+        # print("data is: ", d)
+
+    return bip_graph
 
 
+def COUNT_edit_edge_weight(bip_graph):
+    for u,v,d in bip_graph.edges(data=True):
+        d['weight'] = 1
+    return bip_graph
