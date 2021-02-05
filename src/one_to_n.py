@@ -103,7 +103,7 @@ def calc_max_weight_edit(key1, key2):
     # print(key2)
     # print(editdistance.eval(key1,key2))
     weight = (1)/(1+editdistance.eval(key1,key2))
-    print(weight)
+    # print(weight)
     return weight
 
 """
@@ -170,9 +170,9 @@ def keycomp_treshold_updated_maximal_construct_graph(file_one, file_n, col_to_du
             if i%100000 == 0:
                 print(str(round(100*i/len(file_one)/len(file_n),2))+'% complete')
             if dist <= treshold_decimal:
-                print(comp_point_1, comp_point_2, dist)
+                # print(comp_point_1, comp_point_2, dist)
                 #add value to identifier to disitnguish two entries with different values
-                id2 = str(key2) + '_' + str(val2) + '_2' + "_" 
+                id2 = str(key2) + '_' + str(val2) + '_2'
                 bipartite_graph.add_edge(id1, id2, weight=dist)
                 #edit distance and weight should be inv. prop.
                 #also adding 1 to denom. to prevent divide by 0
