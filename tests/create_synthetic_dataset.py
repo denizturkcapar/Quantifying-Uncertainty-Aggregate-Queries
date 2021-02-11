@@ -68,11 +68,16 @@ def add_typo(df1, df2):
 
 	return df2
 
-data1 = create_first_df(10)
-data2_nontypo = create_second_df(10)
-data2 = add_typo(data1, data2_nontypo)
 
-print(data1)
-print(data2)
-data1.to_csv (r's_data1.csv', index = False, header=True)
-data2.to_csv (r's_data2.csv', index = False, header=True)
+
+'''
+Uncomment the lines below to create synthtetic datasets as a part of the script
+'''
+# data1 = create_first_df(10)
+# data2_nontypo = create_second_df(10)
+# data2 = add_typo(data1, data2_nontypo)
+
+# print(data1)
+# print(data2)
+# data1.to_csv (r's_data1.csv', index = False, header=True)
+# data2.to_csv (r's_data2.csv', index = False, header=True)

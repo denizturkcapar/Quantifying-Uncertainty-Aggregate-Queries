@@ -92,7 +92,6 @@ def calc_min_weight(key1, key2):
     return weight
 
 """
-
 Calculates maximum weight for the matching
 
 Input: keys from 2 tables
@@ -169,7 +168,7 @@ def keycomp_treshold_updated_maximal_construct_graph(file_one, file_n, col_to_du
             i+=1
             if i%100000 == 0:
                 print(str(round(100*i/len(file_one)/len(file_n),2))+'% complete')
-            if dist <= treshold_decimal:
+            if dist >= treshold_decimal:
                 # print(comp_point_1, comp_point_2, dist)
                 #add value to identifier to disitnguish two entries with different values
                 id2 = str(key2) + '_' + str(val2) + '_2'
