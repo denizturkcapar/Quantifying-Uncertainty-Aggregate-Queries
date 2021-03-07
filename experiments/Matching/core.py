@@ -1,17 +1,6 @@
-'''
-The core module sets up the data structures and 
-and references for this programming assignment.
-
-2010
-'''
 
 import platform
 import csv
-
-if platform.system() == 'Windows':
-  print("This assignment will not work on a windows computer")
-  exit()
-
 
 #defines an iterator over the google catalog
 class Catalog():

@@ -86,8 +86,37 @@ def matcher_dup_updated(d1, d2, distance_fn, sampler_fn, required_distance, samp
 				continue
 			else:
 				continue
-			continue
+		continue
 	return match
+
+# Create a look up reference of the data
+def create_lookup(d1,d2, col1, col2):
+	data_lookup = {}
+	for f1 in d1:
+		cleaned_f1 = f1[col1].split("_")[0]
+		data_lookup[cleaned_f1] = f1[col2]
+	for f2 in d2:
+		data_lookup[f2[col1]] = f2[col2]
+	return data_lookup
+
+# filter naive and random sampling matching results, similar to the function of filter of bipartite
+# (See Bipartite Matching COUNT for example)
+
+def filter_results(data_lookup, filter_threshold, matching_list):
+
+	filtered_list = []
+
+	for match in matching_list:
+		first = match[0].split("_")[0]
+		second = match[1]
+		val1 = float(data_lookup[first])
+		val2 = float(data_lookup[second])
+
+		if val1 <= filter_threshold and val2 <= filter_threshold:
+			filtered_list.append((first, second, val1, val2))
+
+	return filtered_list
+
 
 def all(catalog, k=None):
 	return catalog
