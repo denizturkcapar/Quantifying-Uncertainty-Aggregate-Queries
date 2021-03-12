@@ -51,41 +51,50 @@ def matcher_dup(d1, d2, distance_fn, sampler_fn, sample_size=100):
 
 	return match
 
-def matcher_updated(d1, d2, distance_fn, sampler_fn, required_distance, sample_size=100):
+def matcher_updated(n_matches, d1, d2, distance_fn, sampler_fn, required_distance, sample_size=100):
 
-	match = []	
+	match = []
 
 	for e1 in d1:
+		match_count = 0
 		for e2 in sampler_fn(d2, sample_size):
-			distance = calc_max_weight_edit(e1['name'], e2['name'], distance_fn)
-#			print("first data: ", e1['name'], "second data: ", e2['name'], "distance: ", distance)
-			if distance >= required_distance:
-				sum_total = int(e1['age']) + int(e2['age'])
-				match.append((e1['name'],e2['name'], sum_total))
-				continue
+			if match_count <= n_matches:
+				distance = calc_max_weight_edit(e1['name'], e2['name'], distance_fn)
+	#			print("first data: ", e1['name'], "second data: ", e2['name'], "distance: ", distance)
+				if distance >= required_distance:
+					sum_total = int(e1['age']) + int(e2['age'])
+					match.append((e1['name'],e2['name'], sum_total))
+					match_count += 1
+					continue
+				else:
+					continue
 			else:
-				continue
+				break
 		continue
 	return match
 
 
-def matcher_dup_updated(d1, d2, distance_fn, sampler_fn, required_distance, sample_size=100):
+def matcher_dup_updated(n_matches, d1, d2, distance_fn, sampler_fn, required_distance, sample_size=100):
 
 	match = []	
 
 	for e1 in d1:
+		match_count = 0
 		# Note that d1 is always the duplicated table
 		# So the entries of names need to cleaned for the "_number" adjustment during the matching
 		cleaned_e1 = e1['name'].split("_")[0]
 		for e2 in sampler_fn(d2, sample_size):
-			distance = calc_max_weight_edit(cleaned_e1, e2['name'], distance_fn)
-#			print("first data: ", e1['name'], "second data: ", e2['name'], "distance: ", distance)
-			if distance >= required_distance:
-				sum_total = int(e1['age']) + int(e2['age'])
-				match.append((e1['name'],e2['name'], sum_total))
-				continue
+			if match_count <= n_matches:
+				distance = calc_max_weight_edit(cleaned_e1, e2['name'], distance_fn)
+	#			print("first data: ", e1['name'], "second data: ", e2['name'], "distance: ", distance)
+				if distance >= required_distance:
+					sum_total = int(e1['age']) + int(e2['age'])
+					match.append((e1['name'],e2['name'], sum_total))
+					continue
+				else:
+					continue
 			else:
-				continue
+				break
 		continue
 	return match
 
