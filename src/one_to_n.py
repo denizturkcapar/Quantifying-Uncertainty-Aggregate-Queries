@@ -145,12 +145,12 @@ The similarity metric takes into account the **keys** in this implementation
 Input: Any 2 files in any format
 Output: A Bipartite Graph with Maximal Weights
 """
-def keycomp_treshold_updated_maximal_construct_graph(file_one, file_n, col_to_dup, treshold_decimal):
+def keycomp_treshold_updated_maximal_construct_graph(file_one, file_n, col_to_dup, treshold_decimal, n_matches):
     table_a_unprocessed = convert_df(file_one)
     table_b_unprocessed = convert_df(file_n)
     bipartite_graph = nx.Graph()
     
-    table_a_unprocessed = create_duplicates(table_a_unprocessed, col_to_dup, 3) # Assuming that the user inputs 3 duplicates
+    table_a_unprocessed = create_duplicates(table_a_unprocessed, col_to_dup,n_matches) # Assuming that the user inputs 3 duplicates
 
     table_a = make_dict(table_a_unprocessed)
     table_b = make_dict(table_b_unprocessed)
@@ -238,12 +238,12 @@ The similarity metric takes into account the **keys** in this implementation
 Input: Any 2 files in any format
 Output: A Bipartite Graph with Minimal Weights
 """
-def keycomp_treshold_updated_minimal_construct_graph(file_one, file_n, col_to_dup, treshold_decimal):
+def keycomp_treshold_updated_minimal_construct_graph(file_one, file_n, col_to_dup, treshold_decimal, n_matches):
     table_a_unprocessed = convert_df(file_one)
     table_b_unprocessed = convert_df(file_n)
     bipartite_graph = nx.Graph()
     
-    table_a_unprocessed = create_duplicates(table_a_unprocessed, col_to_dup, 3) # Assuming that the user inputs 3 duplicates
+    table_a_unprocessed = create_duplicates(table_a_unprocessed, col_to_dup, n_matches) # Assuming that the user inputs 3 duplicates
 
     table_a = make_dict(table_a_unprocessed)
     table_b = make_dict(table_b_unprocessed)
