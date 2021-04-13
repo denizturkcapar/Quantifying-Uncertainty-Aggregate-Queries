@@ -51,61 +51,48 @@ def matcher_dup(d1, d2, distance_fn, sampler_fn, sample_size=100):
 
 	return match
 
-def matcher_updated(n_matches, d1, d2, distance_fn, sampler_fn, required_distance, sample_size=100):
+def matcher_updated(d1, d2, distance_fn, sampler_fn, required_distance, sample_size=100):
 
 	match = []
 
 	for e1 in d1:
-		match_count = 0
 		for e2 in sampler_fn(d2, sample_size):
-			if match_count <= n_matches:
-				distance = calc_max_weight_edit(e1['name'], e2['name'], distance_fn)
+				distance = calc_max_weight_edit(str(e1['name']).lower(), str(e2['name']).lower(), distance_fn)
 	#			print("first data: ", e1['name'], "second data: ", e2['name'], "distance: ", distance)
-				if distance >= required_distance:
+				if distance <= required_distance:
 					sum_total = int(e1['age']) + int(e2['age'])
 					match.append((e1['name'],e2['name'], sum_total))
-					match_count += 1
-					continue
-				else:
-					continue
-			else:
-				break
-		continue
+					break
 	return match
 
 
-def matcher_dup_updated(n_matches, d1, d2, distance_fn, sampler_fn, required_distance, sample_size=100):
+def matcher_dup_updated(d1, d2, distance_fn, sampler_fn, required_distance, sample_size=100):
 
 	match = []	
 
 	for e1 in d1:
-		match_count = 0
 		# Note that d1 is always the duplicated table
 		# So the entries of names need to cleaned for the "_number" adjustment during the matching
 		cleaned_e1 = e1['name'].split("_")[0]
 		for e2 in sampler_fn(d2, sample_size):
-			if match_count <= n_matches:
-				distance = calc_max_weight_edit(cleaned_e1, e2['name'], distance_fn)
+				distance = calc_max_weight_edit(str(cleaned_e1).lower(), str(e2['name']).lower(), distance_fn)
 	#			print("first data: ", e1['name'], "second data: ", e2['name'], "distance: ", distance)
-				if distance >= required_distance:
+				if distance <= required_distance:
 					sum_total = int(e1['age']) + int(e2['age'])
 					match.append((e1['name'],e2['name'], sum_total))
-					continue
-				else:
-					continue
-			else:
-				break
-		continue
+					break
 	return match
 
 # Create a look up reference of the data
 def create_lookup(d1,d2, col1, col2):
+	records_1 = d1.to_records(index=False)
+	result_1 = list(records_1)
+	records_2 = d2.to_records(index=False)
+	result_2 = list(records_2)
+	joined_list = result_1 + result_2
 	data_lookup = {}
-	for f1 in d1:
-		cleaned_f1 = f1[col1].split("_")[0]
-		data_lookup[cleaned_f1] = f1[col2]
-	for f2 in d2:
-		data_lookup[f2[col1]] = f2[col2]
+	for (name,age) in joined_list:
+		data_lookup[name] = age
 	return data_lookup
 
 # filter naive and random sampling matching results, similar to the function of filter of bipartite

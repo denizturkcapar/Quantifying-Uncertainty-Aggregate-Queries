@@ -35,7 +35,7 @@ def exp_result_to_csv(filename, experiment_output_df):
     #create the CSV with custom filename describing the experiment
     df.to_csv(filename, index = False)
 
-def create_synth_data(table1_rowcount, table2_rowcount, datafilename1, datafilename2, filename1_dup):
+def create_synth_data(table1_rowcount, table2_rowcount, datafilename1, datafilename2, filename1_dup, dup_count):
     table_a_non_duplicated = create_synthetic_dataset.create_first_df(table1_rowcount)
 
     table_b_non_typo = create_synthetic_dataset.create_second_df(table2_rowcount)
@@ -46,30 +46,22 @@ def create_synth_data(table1_rowcount, table2_rowcount, datafilename1, datafilen
     
     table_b.to_csv(datafilename2, index = False, header=True)
     
-    table_a_dup = one_to_n.create_duplicates(table_a_non_duplicated, "name", 3)
+    table_a_dup = one_to_n.create_duplicates(table_a_non_duplicated, "name", dup_count)
     
     table_a_dup.to_csv(filename1_dup, index = False, header=True)
+
+    tables_map = matcher.create_lookup(table_a_non_duplicated,table_b,"name", "age")
     
-    return table_a_non_duplicated, table_b, table_a_dup
+    return table_a_non_duplicated, table_b, table_a_dup, tables_map
 
-def SUM_edit_edge_weight(bip_graph):
-    for u,v,d in bip_graph.edges(data=True):
-        val_tuple_1 = u.split("_")
-        val_tuple_2 = v.split("_")
-        
-        if len(val_tuple_1) == 4:
-            val1 = re.sub("[^0-9]", "", val_tuple_1[2])
-        else: 
-            val1 = re.sub("[^0-9]", "", val_tuple_1[1])
-            
-        if len(val_tuple_2) == 4:
-            val2 =re.sub("[^0-9]", "", val_tuple_2[2])
-        else:
-            val2 =re.sub("[^0-9]", "", val_tuple_2[1])
-
-        d['weight'] = float(val1) + float(val2)
-
-    return bip_graph
+def SUM_edit_edge_weight(table1,table2,col1, col2, bip_graph, lookup_table):
+	for u,v,d in bip_graph.edges(data=True):
+		splitted_u = u.split("_")[0]
+		splitted_v = v.split("_")[0]
+		val_u = lookup_table[splitted_u]
+		val_v = lookup_table[splitted_v]
+		d['weight'] = int(val_u) + int(val_v)
+	return bip_graph
 
 def minimal_matching(sum_weighted_graph):
     new_graph = sum_weighted_graph.copy()
@@ -133,14 +125,15 @@ def sum_total_weights(max_min_list):
         total += i[-1]
     return total
 
-def sum_bip_script(table_a_non_duplicated, table_b, column_name, similarity_threshold, n_matches):
+def sum_bip_script(table_a_non_duplicated, table_b, column_name, similarity_threshold, n_matches, tables_map):
+
     now = datetime.datetime.now()
     bipartite_graph_result = one_to_n.keycomp_treshold_updated_maximal_construct_graph(table_a_non_duplicated, table_b, column_name, similarity_threshold, n_matches)
     timing_tresh = (datetime.datetime.now()-now).total_seconds()
     print("---- Timing for Graph Construction with Treshold Constraint ----")
     print(timing_tresh,"seconds")
     
-    sum_weighted_graph = SUM_edit_edge_weight(bipartite_graph_result)
+    sum_weighted_graph = SUM_edit_edge_weight(table_a_non_duplicated, table_b, "name", "age", bipartite_graph_result, tables_map)
     
     print("\n\n 'SUM' MAXIMAL MATCHING:")
     now = datetime.datetime.now()
@@ -151,9 +144,8 @@ def sum_bip_script(table_a_non_duplicated, table_b, column_name, similarity_thre
     print(timing_match_maximal,"seconds")
     print("The number of edges in the graph is:", sum_weighted_graph.number_of_edges(), "\n")
     
-    
     print("\n\n 'SUM' MINIMAL MATCHING RESULTS:")
-    print(nx.bipartite.is_bipartite(sum_weighted_graph))
+    # print(nx.bipartite.is_bipartite(sum_weighted_graph))
     now = datetime.datetime.now()
     matching_set_minimal = minimal_matching(sum_weighted_graph)
     timing_match_minimal = (datetime.datetime.now()-now).total_seconds()
@@ -173,11 +165,15 @@ def sum_bip_script(table_a_non_duplicated, table_b, column_name, similarity_thre
     total_min = sum_total_weights(out_min)
     print("BP Matching: Lowest bound for minimum:", total_min)
     
-    return total_max, total_min, timing_match_minimal, timing_match_maximal
+    print("BP MAX MATCHING OUTPUT WITH SUMS:", out_max)
+
+    print("BP MIN MATCHING OUTPUT WITH SUMS:", out_min)
+    return total_max, total_min, timing_match_minimal, timing_match_maximal, out_max, out_min
 
 
-def sum_naive_script(n_matches_max, n_matches_min, sim_threshold, filename1_dup, filename2):
+def sum_naive_script(sim_threshold, filename1_dup, filename2, filename1):
     cat_table1_dup = core2.data_catalog(filename1_dup)
+    cat_table1 = core2.data_catalog(filename1)
     cat_table2 = core2.data_catalog(filename2)
     print('Loaded catalogs.')
     
@@ -186,7 +182,7 @@ def sum_naive_script(n_matches_max, n_matches_min, sim_threshold, filename1_dup,
     print("NAIVE MAX MATCHING")
     print('Performing compare all match (edit distance)...')
     now = datetime.datetime.now()
-    max_compare_all_edit_match = matcher.matcher_dup_updated(n_matches_max, cat_table1_dup,cat_table2,editdistance.eval, matcher.all, sim_threshold)
+    max_compare_all_edit_match = matcher.matcher_dup_updated(cat_table1_dup,cat_table2,editdistance.eval, matcher.all, sim_threshold)
     naive_time_edit_max = (datetime.datetime.now()-now).total_seconds()
     print("Naive Edit Distance Matching computation time taken: ", naive_time_edit_max, " seconds")
     #print('Compare All Matcher (Edit Distance) Performance: ' + str(core.eval_matching(compare_all_edit_match)))
@@ -203,7 +199,8 @@ def sum_naive_script(n_matches_max, n_matches_min, sim_threshold, filename1_dup,
     print("NAIVE MIN MATCHING")
     print('Performing compare all match (edit distance)...')
     now = datetime.datetime.now()
-    min_compare_all_edit_match = matcher.matcher_updated(n_matches_min, cat_table1_dup,cat_table2,editdistance.eval, matcher.all, sim_threshold)
+    min_compare_all_edit_match = matcher.matcher_updated(cat_table1,cat_table2,editdistance.eval, matcher.all, sim_threshold)
+    print(min_compare_all_edit_match)
     naive_time_edit_min = (datetime.datetime.now()-now).total_seconds()
     print("Naive Edit Distance Matching computation time taken: ", naive_time_edit_min, " seconds")
     #print('Compare All Matcher (Edit Distance) Performance: ' + str(core.eval_matching(compare_all_edit_match)))
@@ -216,16 +213,20 @@ def sum_naive_script(n_matches_max, n_matches_min, sim_threshold, filename1_dup,
 #     print("Naive Jaccard Matching computation time taken: ", naive_time_jaccard, " seconds")
     #print('Compare All Matcher (Jaccard Distance) Performance: ' + str(core2.eval_matching(compare_all_jaccard_match)))
 
+
     naive_total_max = sum_total_weights(max_compare_all_edit_match)
     naive_total_min = sum_total_weights(min_compare_all_edit_match)
     print("NAIVE MAX Matching Bound: ", naive_total_max)
     print("NAIVE MIN Matching Bound: ", naive_total_min)
-    return naive_total_max, naive_total_min, naive_time_edit_min, naive_time_edit_max
+    print("NAIVE MAX MATCHING WITH SUMS:", max_compare_all_edit_match)
+    print("NAIVE MIN MATCHING WITH SUMS:", min_compare_all_edit_match)
+    return naive_total_max, naive_total_min, naive_time_edit_min, naive_time_edit_max, max_compare_all_edit_match, min_compare_all_edit_match
 
 
-def sum_random_sample_script(n_matches_max, n_matches_min, sim_threshold, sample_size, filename1_dup, filename2):
+def sum_random_sample_script(sim_threshold, sample_size, filename1_dup, filename2, filename1):
     
     cat_table1_dup = core2.data_catalog(filename1_dup)
+    cat_table1 = core2.data_catalog(filename1)
     cat_table2 = core2.data_catalog(filename2)
     print('Loaded catalogs.')
     
@@ -233,7 +234,7 @@ def sum_random_sample_script(n_matches_max, n_matches_min, sim_threshold, sample
     print("RANDOM SAMPLE MAX MATCHING")
     print('Performing random sample match (edit distance)...')
     now = datetime.datetime.now()
-    max_compare_sampled_edit_match = matcher.matcher_dup_updated(n_matches_max, cat_table1_dup,cat_table2,editdistance.eval, matcher.random_sample, sim_threshold, sample_size)
+    max_compare_sampled_edit_match = matcher.matcher_dup_updated(cat_table1_dup,cat_table2,editdistance.eval, matcher.random_sample, sim_threshold, sample_size)
     sim_time_edit_max = (datetime.datetime.now()-now).total_seconds()
     print("Simulation-Based Edit Distance Matching computation time taken: ", sim_time_edit_max, " seconds")
     #print('Random Sample Matcher (Edit Distance) Performance: ' + str(core.eval_matching(compare_all_edit_match)))
@@ -250,7 +251,7 @@ def sum_random_sample_script(n_matches_max, n_matches_min, sim_threshold, sample
     print("RANDOM SAMPLE MIN MATCHING")
     print('Performing random sample match (edit distance)...')
     now = datetime.datetime.now()
-    min_compare_sampled_edit_match = matcher.matcher_updated(n_matches_min, cat_table1_dup,cat_table2,editdistance.eval, matcher.random_sample, sim_threshold, sample_size)
+    min_compare_sampled_edit_match = matcher.matcher_updated(cat_table1,cat_table2,editdistance.eval, matcher.random_sample, sim_threshold, sample_size)
     sim_time_edit_min = (datetime.datetime.now()-now).total_seconds()
     print("Simulation-Based Edit Distance Matching computation time taken: ", sim_time_edit_min, " seconds")
     #print('Random Sample Matcher (Edit Distance) Performance: ' + str(core.eval_matching(compare_all_edit_match)))
@@ -363,7 +364,8 @@ def count_bip_script(table_a_non_duplicated, table_b, column_name, similarity_th
 
 	return total_max_count, total_min_count, timing_match_minimal, timing_match_maximal
 
-def count_naive_script(n_matches_max, n_matches_min, sim_threshold, filename1_dup, filename2, filter_condition):
+def count_naive_script(sim_threshold, filename1_dup, filename2, filename1, filter_condition):
+	cat_table1 = core2.data_catalog(filename1)
 	cat_table1_dup = core2.data_catalog(filename1_dup)
 	cat_table2 = core2.data_catalog(filename2)
 	print('Loaded catalogs.')
@@ -371,7 +373,7 @@ def count_naive_script(n_matches_max, n_matches_min, sim_threshold, filename1_du
 	print("NAIVE MAX MATCHING")
 	print('Performing compare all match (edit distance)...')
 	now = datetime.datetime.now()
-	max_compare_all_edit_match = matcher.matcher_dup_updated(n_matches_max, cat_table1_dup,cat_table2,editdistance.eval, matcher.all, sim_threshold)
+	max_compare_all_edit_match = matcher.matcher_dup_updated(cat_table1_dup,cat_table2,editdistance.eval, matcher.all, sim_threshold)
 	naive_time_edit_max = (datetime.datetime.now()-now).total_seconds()
 	print("Naive Edit Distance Matching computation time taken: ", naive_time_edit_max, " seconds")
 
@@ -379,22 +381,23 @@ def count_naive_script(n_matches_max, n_matches_min, sim_threshold, filename1_du
 	print("NAIVE MIN MATCHING")
 	print('Performing compare all match (edit distance)...')
 	now = datetime.datetime.now()
-	min_compare_all_edit_match = matcher.matcher_updated(n_matches_min, cat_table1_dup,cat_table2,editdistance.eval, matcher.all, sim_threshold)
+	min_compare_all_edit_match = matcher.matcher_updated(cat_table1,cat_table2,editdistance.eval, matcher.all, sim_threshold)
 	naive_time_edit_min = (datetime.datetime.now()-now).total_seconds()
 	print("Naive Edit Distance Matching computation time taken: ", naive_time_edit_min, " seconds")
 
 	# Apply predicate constraint to count for max matching
-	filtered_naive_max = experiment_filter_count(filter_condition, min_compare_all_edit_match)
+	filtered_naive_max = experiment_filter_count(filter_condition, max_compare_all_edit_match)
 	naive_total_max_count = sum_total_weights(filtered_naive_max)
 
 	# Apply predicate constraint to count for min matching
-	filtered_naive_min = experiment_filter_count(filter_condition, max_compare_all_edit_match)
+	filtered_naive_min = experiment_filter_count(filter_condition, min_compare_all_edit_match)
 	naive_total_min_count = sum_total_weights(filtered_naive_min)
 	print("NAIVE MAX Matching Bound: ", naive_total_max_count)
 	print("NAIVE MIN Matching Bound: ", naive_total_min_count)
 	return naive_total_max_count, naive_total_min_count, naive_time_edit_min, naive_time_edit_max
 
-def count_random_sample_script(n_matches_max, n_matches_min, sim_threshold, sample_size, filename1_dup, filename2, filter_condition):
+def count_random_sample_script(sim_threshold, sample_size, filename1_dup, filename2, filename1, filter_condition):
+	cat_table1 = core2.data_catalog(filename1)
 	cat_table1_dup = core2.data_catalog(filename1_dup)
 	cat_table2 = core2.data_catalog(filename2)
 	print('Loaded catalogs.')
@@ -402,7 +405,7 @@ def count_random_sample_script(n_matches_max, n_matches_min, sim_threshold, samp
 	print("RANDOM SAMPLE MAX MATCHING")
 	print('Performing random sample match (edit distance)...')
 	now = datetime.datetime.now()
-	max_compare_sampled_edit_match = matcher.matcher_dup_updated(n_matches_max, cat_table1_dup,cat_table2,editdistance.eval, matcher.random_sample, sim_threshold, sample_size)
+	max_compare_sampled_edit_match = matcher.matcher_dup_updated(cat_table1_dup,cat_table2,editdistance.eval, matcher.random_sample, sim_threshold, sample_size)
 	sim_time_edit_max = (datetime.datetime.now()-now).total_seconds()
 	print("Simulation-Based Edit Distance Matching computation time taken: ", sim_time_edit_max, " seconds")
 
@@ -410,16 +413,16 @@ def count_random_sample_script(n_matches_max, n_matches_min, sim_threshold, samp
 	print("RANDOM SAMPLE MIN MATCHING")
 	print('Performing random sample match (edit distance)...')
 	now = datetime.datetime.now()
-	min_compare_sampled_edit_match = matcher.matcher_updated(n_matches_min, cat_table1_dup,cat_table2,editdistance.eval, matcher.random_sample, sim_threshold, sample_size)
+	min_compare_sampled_edit_match = matcher.matcher_updated(cat_table1,cat_table2,editdistance.eval, matcher.random_sample, sim_threshold, sample_size)
 	sim_time_edit_min = (datetime.datetime.now()-now).total_seconds()
 	print("Simulation-Based Edit Distance Matching computation time taken: ", sim_time_edit_min, " seconds")
 
 	# Apply predicate constraint to count for max matching
-	filtered_sampled_max = experiment_filter_count(filter_condition, min_compare_sampled_edit_match)
+	filtered_sampled_max = experiment_filter_count(filter_condition, max_compare_sampled_edit_match)
 	sampled_total_max_count = sum_total_weights(filtered_sampled_max)
 
 	# Apply predicate constraint to count for min matching
-	filtered_sampled_min = experiment_filter_count(filter_condition, max_compare_sampled_edit_match)
+	filtered_sampled_min = experiment_filter_count(filter_condition, min_compare_sampled_edit_match)
 	sampled_total_min_count = sum_total_weights(filtered_sampled_min)
 
 	print("SAMPLED MAX Matching Bound: ", sampled_total_max_count, "\n")
