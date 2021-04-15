@@ -40,7 +40,7 @@ def create_synth_data(table1_rowcount, table2_rowcount, datafilename1, datafilen
 
     table_b_non_typo = create_synthetic_dataset.create_second_df(table2_rowcount)
 
-    table_b = create_synthetic_dataset.add_typo(table_a_non_duplicated, table_b_non_typo)
+    table_b, perfect_mapping = create_synthetic_dataset.add_typo(table_a_non_duplicated, table_b_non_typo)
     
     table_a_non_duplicated.to_csv(datafilename1, index = False, header=True)
     
@@ -52,7 +52,7 @@ def create_synth_data(table1_rowcount, table2_rowcount, datafilename1, datafilen
 
     tables_map = matcher.create_lookup(table_a_non_duplicated,table_b,"name", "age")
     
-    return table_a_non_duplicated, table_b, table_a_dup, tables_map
+    return table_a_non_duplicated, table_b, table_a_dup, tables_map, perfect_mapping
 
 def SUM_edit_edge_weight(table1,table2,col1, col2, bip_graph, lookup_table):
 	for u,v,d in bip_graph.edges(data=True):
@@ -67,8 +67,10 @@ def minimal_matching(sum_weighted_graph):
     new_graph = sum_weighted_graph.copy()
     max_weight = max([d['weight'] for u,v,d in new_graph.edges(data=True)])
     for u,v,d in new_graph.edges(data=True):
-        d['weight'] = max_weight - d['weight']
-
+    	print("max weight:", max_weight)
+    	print("BEFORE:", d['weight'])
+    	d['weight'] = max_weight - d['weight']
+    	print("AFTER", d['weight'])
     matching_set_minimal = nx.algorithms.matching.max_weight_matching(new_graph)
     return matching_set_minimal
 
@@ -267,7 +269,7 @@ def sum_random_sample_script(sim_threshold, sample_size, filename1_dup, filename
     sampled_total_min = sum_total_weights(min_compare_sampled_edit_match)
     print("SAMPLED MAX Matching Bound: ", sampled_total_max, "\n")
     print("SAMPLED MIN Matching Bound: ", sampled_total_min)
-    return sampled_total_max, sampled_total_min, sim_time_edit_min, sim_time_edit_max
+    return sampled_total_max, sampled_total_min, sim_time_edit_min, sim_time_edit_max, max_compare_sampled_edit_match, min_compare_sampled_edit_match
 
 def sum_results_summaries(bip_max, bip_min, naive_max, naive_min, random_max, random_min):
     print("MAX Matching Bound:")
@@ -429,11 +431,109 @@ def count_random_sample_script(sim_threshold, sample_size, filename1_dup, filena
 	print("SAMPLED MIN Matching Bound: ", sampled_total_min_count)
 	return sampled_total_max_count, sampled_total_min_count, sim_time_edit_min, sim_time_edit_max
 
+def fix_form_bp(bp_match):
+    new_list = []
+    for (val1,val2, weight) in bp_match:
+        splitted1 = val1.split("_")
+        splitted2 = val2.split("_")
+        if len(splitted1) == 4:
+            new_list.append((splitted1[0], splitted2[0], weight))
+        else:
+            new_list.append((splitted2[0], splitted1[0], weight))
+            
+    return new_list
+
+def fix_form_naive(naive_match):
+    new_list = []
+    for (val1,val2, weight) in naive_match:
+        splitted1 = val1.split("_")[0]
+        new_list.append((splitted1, val2, weight))
+    return new_list
+            
+def accuracy_eval(formatted_proposed_matching, perfect_mapping):
+
+    matches = set()
+    proposed_matches = set()
+
+    tp = set()
+    fp = set()
+    fn = set()
+    tn = set()
+
+    for key,vals in perfect_mapping.items():
+    	num_iter = len(vals)
+    	for i in range(0,num_iter):
+        	matches.add((key,vals[i]))
+
+    for (m1,m2,w) in formatted_proposed_matching:
+        proposed_matches.add((m1,m2))
+
+        if (m1,m2) in matches:
+            tp.add((m1,m2))
+        else:
+            fp.add((m1,m2))
+
+    for m in matches:
+        if m not in proposed_matches:
+            fn.add((m1,m2))
+
+    # print("fn", len(fn))
+    # print("tp", len(tp))
+    # print("fp", len(fp))
+    prec = len(tp)/(len(tp) + len(fp))
+    rec = len(tp)/(len(tp) + len(fn))
+    # print("prec", prec)
+    # print("rec", rec)
+    false_pos = 1-prec
+    false_neg = 1-rec
+    accuracy = 2*(prec*rec)/(prec+rec)
+    return false_pos, false_neg, accuracy
+
+def full_evaluation(bp_min,bp_max, naive_min,naive_max, sampled_min,sampled_max, perfect_mapping):
+	formatted_max_bp = fix_form_bp(bp_max)
+	formatted_min_bp = fix_form_bp(bp_min)
+
+	formatted_max_naive = fix_form_naive(naive_max)
+	formatted_min_naive = fix_form_naive(naive_min)
+
+	formatted_max_sampled = fix_form_naive(sampled_max)
+	formatted_min_sampled = fix_form_naive(sampled_min)
+
+	print("PERFECT MAPPING", perfect_mapping)
+	print("NAIVE MIN", formatted_min_naive)
+
+	records_tuple = []
+
+	bp_min_fp, bp_min_fn, bp_min_acc = accuracy_eval(formatted_min_bp, perfect_mapping)
+	bp_max_fp, bp_max_fn, bp_max_acc = accuracy_eval(formatted_max_bp, perfect_mapping)
+
+	naive_min_fp, naive_min_fn, naive_min_acc = accuracy_eval(formatted_min_naive, perfect_mapping)
+	naive_max_fp, naive_max_fn, naive_max_acc = accuracy_eval(formatted_max_naive, perfect_mapping)
+
+	sampled_min_fp, sampled_min_fn, sampled_min_acc = accuracy_eval(formatted_min_sampled, perfect_mapping)
+	sampled_max_fp, sampled_max_fn, sampled_max_acc = accuracy_eval(formatted_max_sampled, perfect_mapping)
+
+	records_tuple.append((bp_min_fp, bp_min_fn, bp_min_acc))
+	records_tuple.append((bp_max_fp, bp_max_fn, bp_max_acc))
+	records_tuple.append((naive_min_fp, naive_min_fn, naive_min_acc))
+	records_tuple.append((naive_max_fp, naive_max_fn, naive_max_acc))
+	records_tuple.append((sampled_min_fp, sampled_min_fn, sampled_min_acc))
+	records_tuple.append((sampled_max_fp, sampled_max_fn, sampled_max_acc))
+
+	print(records_tuple)
+	print((records_tuple[0][0], records_tuple[0][1], records_tuple[0][2]))
+	print((records_tuple[1][0], records_tuple[1][1], records_tuple[1][2])) 
+	print((records_tuple[2][0], records_tuple[2][1], records_tuple[2][2])) 
+	print((records_tuple[3][0], records_tuple[3][1], records_tuple[3][2]))
+	print((records_tuple[4][0], records_tuple[4][1], records_tuple[4][2]))
+	print((records_tuple[5][0], records_tuple[5][1], records_tuple[5][2]))
+	return records_tuple
+
 def create_csv_table(exp_name):
 	with open('{}.csv'.format(exp_name), mode='w') as exp_filename:
 	    experiment_writer = csv.writer(exp_filename, delimiter=',', quotechar='"', quoting=csv.QUOTE_MINIMAL)
-	    experiment_writer.writerow(['Bipartite Min Matching', 'Bipartite Max Matching', 'Naive Min Matching', 'Naive Max Matching', 'Sampled Min Matching', 'Sampled Max Matching', 'TIMING Bipartite Min Matching', 'TIMING Bipartite Max Matching', 'TIMING Naive Min Matching', 'TIMING Naive Max Matching', 'TIMING Sampled Min Matching', 'TIMING Sampled Max Matching'])
-def table_csv_output(bip_max, bip_min, naive_max, naive_min, sampled_max, sampled_min, exp_name, timing_match_minimal, timing_match_maximal, naive_time_edit_min, naive_time_edit_max, sim_time_edit_min, sim_time_edit_max):
+	    experiment_writer.writerow(['Bipartite Min Matching', 'Bipartite Max Matching', 'Naive Min Matching', 'Naive Max Matching', 'Sampled Min Matching', 'Sampled Max Matching', 'TIMING Bipartite Min Matching', 'TIMING Bipartite Max Matching', 'TIMING Naive Min Matching', 'TIMING Naive Max Matching', 'TIMING Sampled Min Matching', 'TIMING Sampled Max Matching', 'bp_min_fp', 'bp_min_fn', 'bp_min_acc', 'bp_max_fp', 'bp_max_fn', 'bp_max_acc', 'naive_min_fp', 'naive_min_fn', 'naive_min_acc', 'naive_max_fp', 'naive_max_fn', 'naive_max_acc', 'sampled_min_fp', 'sampled_min_fn', 'sampled_min_acc', 'sampled_max_fp', 'sampled_max_fn', 'sampled_max_acc'])
+def table_csv_output(bip_max, bip_min, naive_max, naive_min, sampled_max, sampled_min, exp_name, timing_match_minimal, timing_match_maximal, naive_time_edit_min, naive_time_edit_max, sim_time_edit_min, sim_time_edit_max, records_tuple):
 	with open('{}.csv'.format(exp_name), mode='a') as exp_filename:
 		experiment_writer = csv.writer(exp_filename, delimiter=',', quotechar='"', quoting=csv.QUOTE_MINIMAL)
-		experiment_writer.writerow([bip_max, bip_min, naive_max, naive_min, sampled_max, sampled_min, timing_match_minimal, timing_match_maximal, naive_time_edit_min, naive_time_edit_max, sim_time_edit_min, sim_time_edit_max])
+		experiment_writer.writerow([bip_max, bip_min, naive_max, naive_min, sampled_max, sampled_min, timing_match_minimal, timing_match_maximal, naive_time_edit_min, naive_time_edit_max, sim_time_edit_min, sim_time_edit_max, records_tuple[0][0], records_tuple[0][1], records_tuple[0][2], records_tuple[1][0], records_tuple[1][1], records_tuple[1][2], records_tuple[2][0], records_tuple[2][1], records_tuple[2][2], records_tuple[3][0], records_tuple[3][1], records_tuple[3][2],records_tuple[4][0], records_tuple[4][1], records_tuple[4][2],records_tuple[5][0], records_tuple[5][1], records_tuple[5][2]])

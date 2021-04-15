@@ -44,9 +44,9 @@ def matcher_dup(d1, d2, distance_fn, sampler_fn, sample_size=100):
 		for e2 in sampler_fn(d2, sample_size):
 			dist = distance_fn(cleaned_e1,e2['name'])
 			if dist < min_dist:
-				min_dist = dist
+				min_dist = distance
 				min_dist_id = e2['name']
-				sum_total = int(e1['age']) + int(e2['age'])
+		sum_total = int(e1['age']) + int(e2['age'])
 		match.append((e1['name'],min_dist_id, sum_total))
 
 	return match
@@ -56,13 +56,21 @@ def matcher_updated(d1, d2, distance_fn, sampler_fn, required_distance, sample_s
 	match = []
 
 	for e1 in d1:
+		min_dist = math.inf
+		min_dist_id = None
+		min_dist_age = math.inf
 		for e2 in sampler_fn(d2, sample_size):
-				distance = calc_max_weight_edit(str(e1['name']).lower(), str(e2['name']).lower(), distance_fn)
-	#			print("first data: ", e1['name'], "second data: ", e2['name'], "distance: ", distance)
-				if distance <= required_distance:
-					sum_total = int(e1['age']) + int(e2['age'])
-					match.append((e1['name'],e2['name'], sum_total))
-					break
+			distance = calc_max_weight_edit(str(e1['name']).lower(), str(e2['name']).lower(), distance_fn)
+#			print("M1: ", e1['name'], "M2: ", e2['name'],"DIST: ", distance, "REQ:", required_distance)
+			if distance >= required_distance:
+				min_dist = distance
+				min_dist_id = e2['name']
+				min_dist_age = e2['age']
+		if min_dist_id == None:
+			continue
+		else:
+			sum_total = int(e1['age']) + int(min_dist_age)
+			match.append((e1['name'],min_dist_id, sum_total))
 	return match
 
 
@@ -73,14 +81,21 @@ def matcher_dup_updated(d1, d2, distance_fn, sampler_fn, required_distance, samp
 	for e1 in d1:
 		# Note that d1 is always the duplicated table
 		# So the entries of names need to cleaned for the "_number" adjustment during the matching
+		min_dist = math.inf
+		min_dist_id = None
+		min_dist_age = math.inf
 		cleaned_e1 = e1['name'].split("_")[0]
 		for e2 in sampler_fn(d2, sample_size):
-				distance = calc_max_weight_edit(str(cleaned_e1).lower(), str(e2['name']).lower(), distance_fn)
-	#			print("first data: ", e1['name'], "second data: ", e2['name'], "distance: ", distance)
-				if distance <= required_distance:
-					sum_total = int(e1['age']) + int(e2['age'])
-					match.append((e1['name'],e2['name'], sum_total))
-					break
+			distance = calc_max_weight_edit(str(cleaned_e1).lower(), str(e2['name']).lower(), distance_fn)
+			if distance >= required_distance:
+				min_dist = distance
+				min_dist_id = e2['name']
+				min_dist_age = e2['age']
+		if min_dist_id == None:
+			continue
+		else:
+			sum_total = int(e1['age']) + int(min_dist_age)
+			match.append((e1['name'],min_dist_id, sum_total))
 	return match
 
 # Create a look up reference of the data
