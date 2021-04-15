@@ -4,6 +4,7 @@ import string
 import pandas as pd
 import numpy as np
 from pydbgen import pydbgen
+from collections import defaultdict
 
 """
 Just specify the number of rows that you want for the synthetic dataset at the bottom.
@@ -36,7 +37,7 @@ def create_second_df(num_rows):
 	return df2
 
 
-def add_typo(df1, df2):
+def add_typo(df1, df2, num_dup):
 	# Keep a list of names to create names with typos in the next step
 	name_list = []
 
@@ -45,29 +46,29 @@ def add_typo(df1, df2):
 
 	# Adjust typo degrees: 1,2,3
 	name_typo_list = []
-
+	perfect_mapping = defaultdict(list)
 	for i in range(len(name_list)):
-		j = None
-		if i/5 == 0:
-			j = name_list[i] + random.choice(string.ascii_letters)
-			name_typo_list.append(j)
-
-		if i/3 == 0:
-			j = name_list[i] + random.choice(string.ascii_letters) + random.choice(string.ascii_letters)
-			name_typo_list.append(j)
-
-		else:
-			j = name_list[i] + random.choice(string.ascii_letters) + random.choice(string.ascii_letters) + random.choice(string.ascii_letters)
-			name_typo_list.append(j)
-
+		for k in range(num_dup):
+			j = None
+			if i/5 == 0:
+				j = name_list[i] + random.choice(string.ascii_letters)
+				name_typo_list.append(j)
+				perfect_mapping[name_list[i]].append(j)
+			if i/3 == 0:
+				j = name_list[i] + random.choice(string.ascii_letters) + random.choice(string.ascii_letters)
+				name_typo_list.append(j)
+				perfect_mapping[name_list[i]].append(j)
+			else:
+				j = name_list[i] + random.choice(string.ascii_letters) + random.choice(string.ascii_letters) + random.choice(string.ascii_letters)
+				name_typo_list.append(j)
+				perfect_mapping[name_list[i]].append(j)
 	typo_index = 0
 	# Insert typo name to df2
 	for index, row in df2.iterrows():
 		df2.loc[index,'name']= name_typo_list[typo_index]
 		typo_index += 1
 
-	return df2
-
+	return df2, perfect_mapping
 
 
 '''

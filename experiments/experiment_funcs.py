@@ -40,7 +40,7 @@ def create_synth_data(table1_rowcount, table2_rowcount, datafilename1, datafilen
 
     table_b_non_typo = create_synthetic_dataset.create_second_df(table2_rowcount)
 
-    table_b, perfect_mapping = create_synthetic_dataset.add_typo(table_a_non_duplicated, table_b_non_typo)
+    table_b, perfect_mapping = create_synthetic_dataset.add_typo(table_a_non_duplicated, table_b_non_typo, dup_count)
     
     table_a_non_duplicated.to_csv(datafilename1, index = False, header=True)
     
