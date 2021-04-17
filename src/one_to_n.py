@@ -309,6 +309,52 @@ def simpler_min_graph_construct(file_one, file_n, col_to_dup):
     return bipartite_graph
 
 """
+*****************************************************************
+MAXIMAL MATCHING
+*****************************************************************
+Constructs a bipartite graph of the given two tables according to the treshold similarity.
+MIN implementation does not duplicate the 1's table.
+The bipartite matching graph only includes those that have passed a certain similarity treshold.
+The similarity metric takes into account the **keys** in this implementation
+
+Input: Any 2 files in any format
+Output: A Bipartite Graph with Maximal Weights
+"""
+def graph_construct_for_min(file_one, file_n, col_to_dup, treshold_decimal):
+    table_a_unprocessed = convert_df(file_one)
+    table_b_unprocessed = convert_df(file_n)
+    bipartite_graph = nx.Graph()
+    
+    table_a = make_dict(table_a_unprocessed)
+    table_b = make_dict(table_b_unprocessed)
+    
+    i=0
+    
+    for key1, val1 in table_a.items():
+        comp_point_1 = key1.split("_")[0]
+
+        id1 = str(key1) + '_'+ str(val1) + '_1'
+        for key2, val2 in table_b.items():
+
+            comp_point_2 = key2.split("_")[0]
+            dist = calc_max_weight_edit(str(comp_point_1).lower(),str(comp_point_2).lower())
+            i+=1
+            if i%100000 == 0:
+                print(str(round(100*i/len(file_one)/len(file_n),2))+'% complete')
+            if dist >= treshold_decimal:
+                # print(comp_point_1, comp_point_2, dist)
+                #add value to identifier to disitnguish two entries with different values
+                id2 = str(key2) + '_' + str(val2) + '_2'
+                bipartite_graph.add_edge(id1, id2, weight=dist)
+                #edit distance and weight should be inv. prop.
+                #also adding 1 to denom. to prevent divide by 0
+                # add 1,2 to distinguish two key-value tuples belonging to different tables
+            else:
+                continue
+            
+    return bipartite_graph
+
+"""
 (Appropriated inputs from keycomp_treshold_updated_minimal_construct_graph only for idBLP ACM dataset.)
 Constructs a minimal bipartite graph of the given two tables according to the treshold similarity.
 The bipartite matching graph only includes those that have passed a certain similarity treshold.

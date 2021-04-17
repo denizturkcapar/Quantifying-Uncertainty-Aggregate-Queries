@@ -67,10 +67,10 @@ def minimal_matching(sum_weighted_graph):
     new_graph = sum_weighted_graph.copy()
     max_weight = max([d['weight'] for u,v,d in new_graph.edges(data=True)])
     for u,v,d in new_graph.edges(data=True):
-    	print("max weight:", max_weight)
-    	print("BEFORE:", d['weight'])
+    	# print("max weight:", max_weight)
+    	# print("BEFORE:", d['weight'])
     	d['weight'] = max_weight - d['weight']
-    	print("AFTER", d['weight'])
+    	# print("AFTER", d['weight'])
     matching_set_minimal = nx.algorithms.matching.max_weight_matching(new_graph)
     return matching_set_minimal
 
@@ -170,10 +170,13 @@ def sum_bip_script(table_a_non_duplicated, table_b, column_name, similarity_thre
     print("BP MAX MATCHING OUTPUT WITH SUMS:", out_max)
 
     print("BP MIN MATCHING OUTPUT WITH SUMS:", out_min)
-    return total_max, total_min, timing_match_minimal, timing_match_maximal, out_max, out_min
+    return total_max, total_min, timing_match_minimal+timing_tresh, timing_match_maximal+timing_tresh, out_max, out_min
 
 
-def sum_naive_script(sim_threshold, filename1_dup, filename2, filename1):
+def sum_naive_script(sim_threshold, filename1, filename2, table_a_non_duplicated, n_matches, filename1_dup):
+
+    table_a_dup = one_to_n.create_duplicates(table_a_non_duplicated, "name", n_matches)
+    table_a_dup.to_csv(filename1_dup, index = False, header=True)
     cat_table1_dup = core2.data_catalog(filename1_dup)
     cat_table1 = core2.data_catalog(filename1)
     cat_table2 = core2.data_catalog(filename2)
@@ -225,8 +228,10 @@ def sum_naive_script(sim_threshold, filename1_dup, filename2, filename1):
     return naive_total_max, naive_total_min, naive_time_edit_min, naive_time_edit_max, max_compare_all_edit_match, min_compare_all_edit_match
 
 
-def sum_random_sample_script(sim_threshold, sample_size, filename1_dup, filename2, filename1):
+def sum_random_sample_script(sim_threshold, sample_size, filename1, filename2, table_a_non_duplicated, n_matches, filename1_dup):
     
+    table_a_dup = one_to_n.create_duplicates(table_a_non_duplicated, "name", n_matches)
+    table_a_dup.to_csv(filename1_dup, index = False, header=True)
     cat_table1_dup = core2.data_catalog(filename1_dup)
     cat_table1 = core2.data_catalog(filename1)
     cat_table2 = core2.data_catalog(filename2)
@@ -537,3 +542,13 @@ def table_csv_output(bip_max, bip_min, naive_max, naive_min, sampled_max, sample
 	with open('{}.csv'.format(exp_name), mode='a') as exp_filename:
 		experiment_writer = csv.writer(exp_filename, delimiter=',', quotechar='"', quoting=csv.QUOTE_MINIMAL)
 		experiment_writer.writerow([bip_max, bip_min, naive_max, naive_min, sampled_max, sampled_min, timing_match_minimal, timing_match_maximal, naive_time_edit_min, naive_time_edit_max, sim_time_edit_min, sim_time_edit_max, records_tuple[0][0], records_tuple[0][1], records_tuple[0][2], records_tuple[1][0], records_tuple[1][1], records_tuple[1][2], records_tuple[2][0], records_tuple[2][1], records_tuple[2][2], records_tuple[3][0], records_tuple[3][1], records_tuple[3][2],records_tuple[4][0], records_tuple[4][1], records_tuple[4][2],records_tuple[5][0], records_tuple[5][1], records_tuple[5][2]])
+
+
+def count_create_csv_table(exp_name):
+	with open('{}.csv'.format(exp_name), mode='w') as exp_filename:
+	    experiment_writer = csv.writer(exp_filename, delimiter=',', quotechar='"', quoting=csv.QUOTE_MINIMAL)
+	    experiment_writer.writerow(['Bipartite Min Matching', 'Bipartite Max Matching', 'Naive Min Matching', 'Naive Max Matching', 'Sampled Min Matching', 'Sampled Max Matching', 'TIMING Bipartite Min Matching', 'TIMING Bipartite Max Matching', 'TIMING Naive Min Matching', 'TIMING Naive Max Matching', 'TIMING Sampled Min Matching', 'TIMING Sampled Max Matching'])
+def count_table_csv_output(bip_max, bip_min, naive_max, naive_min, sampled_max, sampled_min, exp_name, timing_match_minimal, timing_match_maximal, naive_time_edit_min, naive_time_edit_max, sim_time_edit_min, sim_time_edit_max):
+	with open('{}.csv'.format(exp_name), mode='a') as exp_filename:
+		experiment_writer = csv.writer(exp_filename, delimiter=',', quotechar='"', quoting=csv.QUOTE_MINIMAL)
+		experiment_writer.writerow([bip_max, bip_min, naive_max, naive_min, sampled_max, sampled_min, timing_match_minimal, timing_match_maximal, naive_time_edit_min, naive_time_edit_max, sim_time_edit_min, sim_time_edit_max])
