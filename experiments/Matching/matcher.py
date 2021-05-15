@@ -2,6 +2,7 @@ from Matching import core2
 import editdistance
 import math
 import random
+from collections import defaultdict
 
 """
 Calculates maximum weight for the matching
@@ -51,52 +52,58 @@ def matcher_dup(d1, d2, distance_fn, sampler_fn, sample_size=100):
 
 	return match
 
-def matcher_updated(d1, d2, distance_fn, sampler_fn, required_distance, sample_size=100):
+# Use only 1 matcher function, give num_match as a variable to get matches
+def matcher_updated(num_matches, is_max, d1, d2, distance_fn, sampler_fn, required_distance, sample_size=100):
 
-	match = []
-
+	# match = []
+	match_map = defaultdict(list)
 	for e1 in d1:
-		min_dist = math.inf
-		min_dist_id = None
-		min_dist_age = math.inf
+
 		for e2 in sampler_fn(d2, sample_size):
 			distance = calc_max_weight_edit(str(e1['name']).lower(), str(e2['name']).lower(), distance_fn)
 #			print("M1: ", e1['name'], "M2: ", e2['name'],"DIST: ", distance, "REQ:", required_distance)
 			if distance >= required_distance:
-				min_dist = distance
-				min_dist_id = e2['name']
-				min_dist_age = e2['age']
-		if min_dist_id == None:
-			continue
-		else:
-			sum_total = int(e1['age']) + int(min_dist_age)
-			match.append((e1['name'],min_dist_id, sum_total))
-	return match
+				sum_total = int(e1['age']) + int(e2['age'])
+				match_map[e1['name']].append((e1['name'],e2['name'], sum_total))
+				# match.append((e1['name'],e2['name'], sum_total))
+	for k,v in match_map.items():
+		match_map[k] = sorted(v,key=lambda x: x[-1], reverse=True)
+
+	if is_max == True:
+		res = extract_top_n(match_map,num_matches)
+	else:
+		res = extract_bottom_1(match_map)
+	return res
+
+def extract_top_n(d,n):
+	res = []
+	for k,v in d.items():
+		res += v[:n]
+	# print(res)
+	return res
+
+def extract_bottom_1(d):
+	res = []	
+	for k,v in d.items():
+		res.append(v[-1])
+	# print(res)
+	return res
 
 
-def matcher_dup_updated(d1, d2, distance_fn, sampler_fn, required_distance, sample_size=100):
+# def matcher_dup_updated(d1, d2, distance_fn, sampler_fn, required_distance, sample_size=100):
 
-	match = []	
+# 	match = []	
 
-	for e1 in d1:
-		# Note that d1 is always the duplicated table
-		# So the entries of names need to cleaned for the "_number" adjustment during the matching
-		min_dist = math.inf
-		min_dist_id = None
-		min_dist_age = math.inf
-		cleaned_e1 = e1['name'].split("_")[0]
-		for e2 in sampler_fn(d2, sample_size):
-			distance = calc_max_weight_edit(str(cleaned_e1).lower(), str(e2['name']).lower(), distance_fn)
-			if distance >= required_distance:
-				min_dist = distance
-				min_dist_id = e2['name']
-				min_dist_age = e2['age']
-		if min_dist_id == None:
-			continue
-		else:
-			sum_total = int(e1['age']) + int(min_dist_age)
-			match.append((e1['name'],min_dist_id, sum_total))
-	return match
+# 	for e1 in d1:
+# 		# Note that d1 is always the duplicated table
+# 		# So the entries of names need to cleaned for the "_number" adjustment during the matching
+# 		cleaned_e1 = e1['name'].split("_")[0]
+# 		for e2 in sampler_fn(d2, sample_size):
+# 			distance = calc_max_weight_edit(str(cleaned_e1).lower(), str(e2['name']).lower(), distance_fn)
+# 			if distance >= required_distance:
+# 				sum_total = int(e1['age']) + int(e2['age'])
+# 				match.append((e1['name'],e2['name'], sum_total))
+# 	return match
 
 # Create a look up reference of the data
 def create_lookup(d1,d2, col1, col2):
@@ -136,4 +143,31 @@ def random_sample(catalog, k):
 	k = min(k,catalog.length)
 	return random.sample(list(catalog),k)
 
+# Function used for Case 3.
+def matching_with_random_swaps(num_swaps, num_matches, is_max, d1, d2, distance_fn, sampler_fn, required_distance, sample_size=100):
 
+	# match = []
+	swap_counter = 0
+	match_map = defaultdict(list)
+	for e1 in d1:
+
+		for e2 in sampler_fn(d2, sample_size):
+			distance = calc_max_weight_edit(str(e1['name']).lower(), str(e2['name']).lower(), distance_fn)
+#			print("M1: ", e1['name'], "M2: ", e2['name'],"DIST: ", distance, "REQ:", required_distance)
+			if swap_counter > num_swaps:
+				if distance >= required_distance:
+					sum_total = int(e1['age']) + int(e2['age'])
+					match_map[e1['name']].append((e1['name'],e2['name'], sum_total))
+					# match.append((e1['name'],e2['name'], sum_total))
+			else:
+				sum_total = int(e1['age']) + int(e2['age'])
+				match_map[e1['name']].append((e1['name'],e2['name'], sum_total))
+				swap_counter += 1
+	for k,v in match_map.items():
+		match_map[k] = sorted(v,key=lambda x: x[-1], reverse=True)
+
+	if is_max == True:
+		res = extract_top_n(match_map,num_matches)
+	else:
+		res = extract_bottom_1(match_map)
+	return res
