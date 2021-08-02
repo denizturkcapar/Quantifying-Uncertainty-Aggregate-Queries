@@ -41,7 +41,9 @@ def lat_convert_df(file):
     if isinstance(file, pd.DataFrame):
         return file
     else:
+        # print(file)
         df = pd.read_csv(file, encoding='latin-1')
+        # print(df)
         return df
 
 """
@@ -64,8 +66,7 @@ def create_duplicates(df, col, num):
 
 	for i, row in df_repeated.iterrows():
 		df_repeated.loc[i, col] = str(row[col])+'_'+str(i//n)
-
-#	print(df_repeated)
+        
 	return df_repeated
 
 """
@@ -191,12 +192,12 @@ The similarity metric takes into account the **values** in this implementation
 Input: Any 2 files in any format
 Output: A Bipartite Graph with Maximal Weights
 """
-def valcomp_treshold_updated_maximal_construct_graph(file_one, file_n, col_to_dup, treshold_decimal):
+def valcomp_treshold_updated_maximal_construct_graph(file_one, file_n, col_to_dup, treshold_decimal, n_matches):
     table_a_unprocessed = convert_df(file_one)
     table_b_unprocessed = convert_df(file_n)
     bipartite_graph = nx.Graph()
     
-    table_a_unprocessed = create_duplicates(table_a_unprocessed, col_to_dup, 3) # Assuming that the user inputs 3 duplicates
+    table_a_unprocessed = create_duplicates(table_a_unprocessed, col_to_dup, n_matches)
 
     table_a = make_dict(table_a_unprocessed)
     table_b = make_dict(table_b_unprocessed)
@@ -809,11 +810,11 @@ def randomize_by_edge_swaps(bip_graph, num_iterations):
         tail1   tail2
     Then we wish to swap the edges between these four nodes as one
     of the two following possibilities:
-        head1   head2       head1---head2
+        head1   head2       
             \ /
              X
             / \
-        tail1   tail2       tail1---tail2
+        tail1   tail2       
     We approach both by following through the first of the two
     possibilities, but before committing to the edge creation, give
     a chance that we flip the nodes `head1` and `tail1`.
@@ -914,3 +915,108 @@ def randomize_by_edge_swaps(bip_graph, num_iterations):
 
     assert len(newgraph.edges()) == num_edges
     return newgraph
+
+def HUNGARIAN_maximum_weight_full_matching(G, min_match=False, top_nodes=None, weight="weight"):
+    r"""Returns a minimum weight full matching of the bipartite graph `G`.
+
+    Let :math:`G = ((U, V), E)` be a weighted bipartite graph with real weights
+    :math:`w : E \to \mathbb{R}`. This function then produces a matching
+    :math:`M \subseteq E` with cardinality
+
+    .. math::
+       \lvert M \rvert = \min(\lvert U \rvert, \lvert V \rvert),
+
+    which minimizes the sum of the weights of the edges included in the
+    matching, :math:`\sum_{e \in M} w(e)`, or raises an error if no such
+    matching exists.
+
+    When :math:`\lvert U \rvert = \lvert V \rvert`, this is commonly
+    referred to as a perfect matching; here, since we allow
+    :math:`\lvert U \rvert` and :math:`\lvert V \rvert` to differ, we
+    follow Karp [1]_ and refer to the matching as *full*.
+
+    Parameters
+    ----------
+    G : NetworkX graph
+
+      Undirected bipartite graph
+
+    top_nodes : container
+
+      Container with all nodes in one bipartite node set. If not supplied
+      it will be computed.
+
+    weight : string, optional (default='weight')
+
+       The edge data key used to provide each value in the matrix.
+
+    Returns
+    -------
+    matches : dictionary
+
+      The matching is returned as a dictionary, `matches`, such that
+      ``matches[v] == w`` if node `v` is matched to node `w`. Unmatched
+      nodes do not occur as a key in `matches`.
+
+    Raises
+    ------
+    ValueError
+      Raised if no full matching exists.
+
+    ImportError
+      Raised if SciPy is not available.
+
+    Notes
+    -----
+    The problem of determining a minimum weight full matching is also known as
+    the rectangular linear assignment problem. This implementation defers the
+    calculation of the assignment to SciPy.
+
+    References
+    ----------
+    .. [1] Richard Manning Karp:
+       An algorithm to Solve the m x n Assignment Problem in Expected Time
+       O(mn log n).
+       Networks, 10(2):143–152, 1980.
+    .. [2] Networkx minimum_weight_full_matching Source Code. 
+       https://networkx.org/documentation/stable/_modules/networkx/algorithms/bipartite/matching.html#minimum_weight_full_matching
+
+    """
+    try:
+        import numpy as np
+        import scipy.optimize
+    except ImportError as e:
+        raise ImportError(
+            "minimum_weight_full_matching requires SciPy: " + "https://scipy.org/"
+        ) from e
+    left, right = nx.bipartite.sets(G, top_nodes)
+    U = list(left)
+    V = list(right)
+
+    if min_match == True:
+        # We explicitly create the biadjancency matrix having POSITIVE infinities
+        # where edges are missing (as opposed to zeros, which is what one would
+        # get by using toarray on the sparse matrix).
+        weights_sparse = biadjacency_matrix(
+            G, row_order=U, column_order=V, weight=weight, format="coo"
+        )
+        weights = np.full(weights_sparse.shape, np.inf)
+        weights[weights_sparse.row, weights_sparse.col] = weights_sparse.data
+
+        left_matches = scipy.optimize.linear_sum_assignment(weights, maximize=False)
+    else: 
+        # We explicitly create the biadjancency matrix having NEGATIVE infinities
+        # where edges are missing (as opposed to zeros, which is what one would
+        # get by using toarray on the sparse matrix).
+        weights_sparse = biadjacency_matrix(
+            G, row_order=U, column_order=V, weight=weight, format="coo"
+        )
+        weights = np.full(weights_sparse.shape, np.NINF)
+        weights[weights_sparse.row, weights_sparse.col] = weights_sparse.data
+
+        left_matches = scipy.optimize.linear_sum_assignment(weights, maximize=True)     
+    d = {U[u]: V[v] for u, v in zip(*left_matches)}
+    # d will contain the matching from edges in left to right; we need to
+    # add the ones from right to left as well.
+    d.update({v: u for u, v in d.items()})
+    return d

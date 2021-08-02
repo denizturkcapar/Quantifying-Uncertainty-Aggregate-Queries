@@ -1,8 +1,9 @@
-from Matching import core2
+from Matching import core
 import editdistance
 import math
 import random
 from collections import defaultdict
+import re
 
 """
 Calculates maximum weight for the matching
@@ -11,10 +12,16 @@ Input: keys from 2 tables
 Output: weight for each matching to be used in the weight part of constructing the graph
 """
 def calc_max_weight_edit(key1, key2, distance_func):
+    # print("JACCARD DIST:", distance_func(key1,key2))
     weight = (1)/(1+distance_func(key1,key2))
     # print(weight)
     return weight
 
+def calc_max_weight_jaccard(key1, key2, distance_func):
+    # print("JACCARD DIST:", distance_func(key1,key2))
+    weight = distance_func(key1,key2)
+    # print(weight)
+    return weight
 
 def matcher(d1, d2, distance_fn, sampler_fn, sample_size=100):
 
@@ -74,6 +81,43 @@ def matcher_updated(num_matches, is_max, d1, d2, distance_fn, sampler_fn, requir
 	else:
 		res = extract_bottom_1(match_map)
 	return res
+
+# Use only 1 matcher function, give num_match as a variable to get matches
+def realdata_matcher_updated(num_matches, is_max, d1, d2, distance_fn, sampler_fn, required_distance, sample_size=100):
+	res_without_sum = []
+	# match = []
+	match_map = defaultdict(list)
+	# print("DF1: ", d1)
+	# print("DF2 ", d2)
+	trim = re.compile(r'[^\d.,]+')
+	for e1 in d1:
+
+		for e2 in sampler_fn(d2, sample_size):
+			# print("M1: ", e1['name'], "M2: ", e2['name'])
+			distance = calc_max_weight_jaccard(str(e1['name']).lower(), str(e2['name']).lower(), distance_fn)
+			# print("M1: ", e1['name'], "M2: ", e2['name'],"DIST: ", distance, "REQ:", required_distance)
+			# if distance != 0:
+			# 	print("M1: ", e1['name'], "M2: ", e2['name'], "DIST: ", distance)
+			if distance >= required_distance:
+				val1 = trim.sub('', e1['price'])
+				val2 = trim.sub('', e2['price'])
+				# val1 = re.sub("[^0-9]", "", e1['price'])
+				# val2 =re.sub("[^0-9]", "", e2['price'])
+				# print("M1: ", e1['name'], "M2: ", e2['name'], e1['price'], e2['price'], "val1", val1, "val2", val2,"DIST: ", distance)
+				sum_total = float(val1) + float(val2)
+				match_map[e1['name']].append((e1['name'],e2['name'], sum_total))
+				# match.append((e1['name'],e2['name'], sum_total))
+
+				res_without_sum.append((e1['id'], e2['id']))
+
+	for k,v in match_map.items():
+		match_map[k] = sorted(v,key=lambda x: x[-1], reverse=True)
+
+	if is_max == True:
+		res = extract_top_n(match_map,num_matches)
+	else:
+		res = extract_bottom_1(match_map)
+	return res, res_without_sum
 
 def extract_top_n(d,n):
 	res = []

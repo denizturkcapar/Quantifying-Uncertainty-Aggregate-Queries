@@ -555,16 +555,32 @@ def accuracy_eval(formatted_proposed_matching, perfect_mapping):
         if m not in proposed_matches:
             fn.add((m1,m2))
 
-    # print("fn", len(fn))
-    # print("tp", len(tp))
-    # print("fp", len(fp))
-    prec = len(tp)/(len(tp) + len(fp))
-    rec = len(tp)/(len(tp) + len(fn))
+    print("fn", len(fn))
+    print("tp", len(tp))
+    print("fp", len(fp))
+
+    try:
+        prec = len(tp)/(len(tp) + len(fp))
+    except ZeroDivisionError:
+        prec = 0
+
+    try:
+        rec = len(tp)/(len(tp) + len(fn))
+    except ZeroDivisionError:
+        rec = 0
+    
+    
     # print("prec", prec)
     # print("rec", rec)
     false_pos = 1-prec
     false_neg = 1-rec
-    accuracy = 2*(prec*rec)/(prec+rec)
+
+    try:
+        accuracy = round(2*(prec*rec)/(prec+rec),2)
+    except ZeroDivisionError:
+        accuracy = 0
+
+    print(accuracy)
     return false_pos, false_neg, accuracy
 
 def full_evaluation(bp_min,bp_max, naive_min,naive_max, sampled_min,sampled_max, perfect_mapping):

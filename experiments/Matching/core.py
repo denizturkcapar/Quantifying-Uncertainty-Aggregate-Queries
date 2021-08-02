@@ -22,11 +22,13 @@ class Catalog():
     def __next__(self):
       row = next(self.reader)
       return {'id': row[0],
-               'title': row[1],
+               'name': row[1],
                'description': row[2],
                'mfg': row[3],
                'price': row[4]
               }
+def data_catalog(filename):
+    return Catalog(filename)
 
 def google_catalog():
     return Catalog('Matching/data/GoogleProducts.csv')
@@ -60,10 +62,27 @@ def eval_matching(matching):
     for m in matches:
         if m not in proposed_matches:
             fn.add(m)
+    print("TP: ", len(tp))
+    print("FP: ", len(fp))
 
-    prec = len(tp)/(len(tp) + len(fp))
-    rec = len(tp)/(len(tp) + len(fn))
+    try:
+        prec = len(tp)/(len(tp) + len(fp))
+    except ZeroDivisionError:
+        prec = 0
+    
+    try:
+        rec = len(tp)/(len(tp) + len(fn))
+    except ZeroDivisionError:
+        rec = 0
+    
+    try:
+        accuracy = round(2*(prec*rec)/(prec+rec),2)
+    except ZeroDivisionError:
+        accuracy = 0
+
+    print(prec)
+    print(rec)
 
     return {'false positive': round(1-prec,2), 
             'false negative': round(1-rec,2),
-            'accuracy': round(2*(prec*rec)/(prec+rec),2) }
+            'accuracy': accuracy }

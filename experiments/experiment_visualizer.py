@@ -58,7 +58,7 @@ def show_experiment_1(results_file, experiment_name):
 
 def create_1_to_n_sum_results(result_filename, bp_sim, naive_sim, sampled_sim, actual_n, bp_n, naive_n, sampled_n, table_a_length, sample_num, is_age_skewed=False, num_swaps=None):
 	experiment_funcs.create_csv_table(result_filename)
-	for i in range(1):
+	for i in range(10):
 		# Create Randomized Data
 		table_a_non_duplicated, table_b, table_a_dup, tables_map, perfect_mapping, perfect_mapping_sum_result = experiment_funcs.create_synth_data(table_a_length, "table1", "table2", "table1_dup", actual_n, is_age_skewed)
 		if num_swaps != None:
@@ -89,7 +89,7 @@ def create_1_to_n_sum_results(result_filename, bp_sim, naive_sim, sampled_sim, a
 
 def create_skewed_1_to_n_sum_results(result_filename, bp_sim, naive_sim, sampled_sim, actual_n, bp_n, naive_n, sampled_n, table_a_length, sample_num, is_age_skewed=False, num_swaps=None):
 	experiment_funcs.create_csv_table(result_filename)
-	for i in range(1):
+	for i in range(10):
 		# Create Randomized Data
 		table_a_non_duplicated, table_b, table_a_dup, tables_map, perfect_mapping, perfect_mapping_sum_result = experiment_funcs.create_skewed_data(table_a_length, "table1", "table2", "table1_dup", actual_n, is_age_skewed)
 		if num_swaps != None:
@@ -127,19 +127,19 @@ def experiment2_width_helper(results_file):
 	# sampled_min_med = df1['Sampled Min Matching'].median()
 	sampled_max_med = df1['Sampled Max Matching'].median()
 	perf_threshold = df1['Perfect Matching SUM'].median()
-	bp_width1 = bp_max_med - perf_threshold
-	naive_width1 = naive_max_med - perf_threshold
-	sampled_width1 = sampled_max_med - perf_threshold
+	bp_width1 = (bp_max_med - perf_threshold) / perf_threshold
+	naive_width1 = (naive_max_med - perf_threshold) / perf_threshold
+	sampled_width1 = (sampled_max_med - perf_threshold) / perf_threshold
 
 	return bp_width1, naive_width1, sampled_width1
 def show_experiment_2_balanced(experiment_name, sim_thresh, is_age_skewed=False, num_swaps=None):
 	
-	create_1_to_n_sum_results("balanced_2_n1", sim_thresh,sim_thresh,sim_thresh,1,1,1,1,100,100, is_age_skewed, 25)
-	create_1_to_n_sum_results("balanced_2_n2", sim_thresh,sim_thresh,sim_thresh,2,2,2,2,100,150, is_age_skewed, 25)
-	create_1_to_n_sum_results("balanced_2_n3", sim_thresh,sim_thresh,sim_thresh,3,3,3,3,100,200, is_age_skewed, 25)
-	create_1_to_n_sum_results("balanced_2_n4", sim_thresh,sim_thresh,sim_thresh,4,4,4,4,100,250, is_age_skewed, 50)
-	create_1_to_n_sum_results("balanced_2_n5", sim_thresh,sim_thresh,sim_thresh,5,5,5,5,100,300, is_age_skewed, 75)
-	create_1_to_n_sum_results("balanced_2_n6", sim_thresh,sim_thresh,sim_thresh,6,6,6,6,100,300, is_age_skewed, 75)
+	create_1_to_n_sum_results("balanced_2_n1", sim_thresh,sim_thresh,sim_thresh,1,1,1,1,100,100, is_age_skewed)
+	create_1_to_n_sum_results("balanced_2_n2", sim_thresh,sim_thresh,sim_thresh,2,2,2,2,100,150, is_age_skewed)
+	create_1_to_n_sum_results("balanced_2_n3", sim_thresh,sim_thresh,sim_thresh,3,3,3,3,100,200, is_age_skewed)
+	create_1_to_n_sum_results("balanced_2_n4", sim_thresh,sim_thresh,sim_thresh,4,4,4,4,100,250, is_age_skewed)
+	create_1_to_n_sum_results("balanced_2_n5", sim_thresh,sim_thresh,sim_thresh,5,5,5,5,100,300, is_age_skewed)
+	create_1_to_n_sum_results("balanced_2_n6", sim_thresh,sim_thresh,sim_thresh,6,6,6,6,100,300, is_age_skewed)
 	# 1-1
 	bp_width1, naive_width1, sampled_width1 = experiment2_width_helper("balanced_2_n1")
 	#1-2
@@ -174,12 +174,12 @@ def show_experiment_2_balanced(experiment_name, sim_thresh, is_age_skewed=False,
 
 def show_experiment_2_skewed(experiment_name, sim_thresh, is_age_skewed=False, num_swaps=None):
 	
-	create_skewed_1_to_n_sum_results("skewed_2_n1", sim_thresh,sim_thresh,sim_thresh,1,1,1,1,100,100, is_age_skewed, 10)
-	create_skewed_1_to_n_sum_results("skewed_2_n2", sim_thresh,sim_thresh,sim_thresh,2,2,2,2,100,125, is_age_skewed, 10)
-	create_skewed_1_to_n_sum_results("skewed_2_n3", sim_thresh,sim_thresh,sim_thresh,3,3,3,3,100,150, is_age_skewed, 10)
-	create_skewed_1_to_n_sum_results("skewed_2_n4", sim_thresh,sim_thresh,sim_thresh,4,4,4,4,100,200, is_age_skewed, 10)
-	create_skewed_1_to_n_sum_results("skewed_2_n5", sim_thresh,sim_thresh,sim_thresh,5,5,5,5,100,250, is_age_skewed, 10)
-	create_skewed_1_to_n_sum_results("skewed_2_n6", sim_thresh,sim_thresh,sim_thresh,6,6,6,6,100,250, is_age_skewed, 10)
+	# create_skewed_1_to_n_sum_results("skewed_2_n1", sim_thresh,sim_thresh,sim_thresh,1,1,1,1,100,100, is_age_skewed)
+	# create_skewed_1_to_n_sum_results("skewed_2_n2", sim_thresh,sim_thresh,sim_thresh,2,2,2,2,100,125, is_age_skewed)
+	# create_skewed_1_to_n_sum_results("skewed_2_n3", sim_thresh,sim_thresh,sim_thresh,3,3,3,3,100,150, is_age_skewed)
+	# create_skewed_1_to_n_sum_results("skewed_2_n4", sim_thresh,sim_thresh,sim_thresh,4,4,4,4,100,200, is_age_skewed)
+	# create_skewed_1_to_n_sum_results("skewed_2_n5", sim_thresh,sim_thresh,sim_thresh,5,5,5,5,100,250, is_age_skewed)
+	# create_skewed_1_to_n_sum_results("skewed_2_n6", sim_thresh,sim_thresh,sim_thresh,6,6,6,6,100,250, is_age_skewed)
 	# 1-1
 	bp_width1, naive_width1, sampled_width1 = experiment2_width_helper("skewed_2_n1")
 	#1-2
@@ -225,9 +225,9 @@ def experiment_3_acc_helper(results_file):
 	sampled_max_med = df1['Sampled Max Matching'].median()
 	sampled_avg = (sampled_min_med + sampled_max_med)/2
 	perf_threshold = df1['Perfect Matching SUM'].median()
-	bp_acc_metric = bp_max_med - perf_threshold
-	naive_acc_metric = naive_max_med - perf_threshold
-	sampled_acc_metric = sampled_max_med - perf_threshold
+	bp_acc_metric = (bp_max_med - perf_threshold) / perf_threshold
+	naive_acc_metric = (naive_max_med - perf_threshold) / perf_threshold
+	sampled_acc_metric = (sampled_max_med - perf_threshold) / perf_threshold
 
 	return bp_acc_metric, naive_acc_metric, sampled_acc_metric
 def show_experiment_3(experiment_name, sim_thresh, is_age_skewed=False, num_swaps=None):
@@ -272,11 +272,13 @@ def show_experiment_3(experiment_name, sim_thresh, is_age_skewed=False, num_swap
 
 def show_experiment_4_balanced(experiment_name, user_n, is_age_skewed=False, num_swaps=None):
 	
-	create_1_to_n_sum_results("1_exp4_balanced", 0.2,0.2,0.2,user_n,user_n,user_n,user_n,100,100, is_age_skewed, num_swaps)
-	create_1_to_n_sum_results("2_exp4_balanced", 0.17,0.17,0.17,user_n,user_n,user_n,user_n,100,150, is_age_skewed, num_swaps)
-	create_1_to_n_sum_results("3_exp4_balanced", 0.14,0.14,0.14,user_n,user_n,user_n,user_n,100,200, is_age_skewed, num_swaps)
-	create_1_to_n_sum_results("4_exp4_balanced", 0.11,0.11,0.11,user_n,user_n,user_n,user_n,100,250, is_age_skewed, num_swaps)
-	create_1_to_n_sum_results("5_exp4_balanced", 0.08,0.08,0.08,user_n,user_n,user_n,user_n,100,300, is_age_skewed, num_swaps)
+	# create_1_to_n_sum_results("1_exp4_balanced", 0.2,0.2,0.2,user_n,user_n,user_n,user_n,100,100, is_age_skewed, num_swaps)
+	# create_1_to_n_sum_results("2_exp4_balanced", 0.17,0.17,0.17,user_n,user_n,user_n,user_n,100,150, is_age_skewed, num_swaps)
+	# create_1_to_n_sum_results("3_exp4_balanced", 0.14,0.14,0.14,user_n,user_n,user_n,user_n,100,200, is_age_skewed, num_swaps)
+	# create_1_to_n_sum_results("4_exp4_balanced", 0.11,0.11,0.11,user_n,user_n,user_n,user_n,100,250, is_age_skewed, num_swaps)
+	# create_1_to_n_sum_results("5_exp4_balanced", 0.08,0.08,0.08,user_n,user_n,user_n,user_n,100,300, is_age_skewed, num_swaps)
+
+	# do not uncomment here
 	# create_1_to_n_sum_results("6_exp4_balanced", 0.06,0.06,0.06,user_n,user_n,user_n,user_n,100,300, is_age_skewed, num_swaps)
 	# create_1_to_n_sum_results("6_exp4_balanced", 0.02,0.02,0.02,user_n,user_n,user_n,user_n,100,300, is_age_skewed, num_swaps)
 
@@ -359,13 +361,13 @@ def show_experiment_4_skewed(experiment_name, user_n, is_age_skewed=False, num_s
 	plt.show()
 
 def show_experiment_5_balanced(experiment_name, user_n, sim_thresh, is_age_skewed=False):
-	create_1_to_n_sum_results("25_exp5_skewed", sim_thresh,sim_thresh,sim_thresh,user_n,user_n,user_n,user_n,100,100, is_age_skewed, 25)
-	create_1_to_n_sum_results("50_exp5_skewed", sim_thresh,sim_thresh,sim_thresh,user_n,user_n,user_n,user_n,100,150, is_age_skewed, 50)
-	create_1_to_n_sum_results("75_exp5_skewed", sim_thresh,sim_thresh,sim_thresh,user_n,user_n,user_n,user_n,100,200, is_age_skewed, 75)
-	create_1_to_n_sum_results("100_exp5_skewed", sim_thresh,sim_thresh,sim_thresh,user_n,user_n,user_n,user_n,100,250, is_age_skewed, 100)
-	create_1_to_n_sum_results("125_exp5_skewed", sim_thresh,sim_thresh,sim_thresh,user_n,user_n,user_n,user_n,100,225, is_age_skewed, 125)
-	create_1_to_n_sum_results("150_exp4_skewed", sim_thresh,sim_thresh,sim_thresh,user_n,user_n,user_n,user_n,100,300, is_age_skewed, 150)
-	create_1_to_n_sum_results("175_exp4_skewed", sim_thresh,sim_thresh,sim_thresh,user_n,user_n,user_n,user_n,100,300, is_age_skewed, 175)
+	# create_1_to_n_sum_results("25_exp5_skewed", sim_thresh,sim_thresh,sim_thresh,user_n,user_n,user_n,user_n,100,100, is_age_skewed, 25)
+	# create_1_to_n_sum_results("50_exp5_skewed", sim_thresh,sim_thresh,sim_thresh,user_n,user_n,user_n,user_n,100,150, is_age_skewed, 50)
+	# create_1_to_n_sum_results("75_exp5_skewed", sim_thresh,sim_thresh,sim_thresh,user_n,user_n,user_n,user_n,100,200, is_age_skewed, 75)
+	# create_1_to_n_sum_results("100_exp5_skewed", sim_thresh,sim_thresh,sim_thresh,user_n,user_n,user_n,user_n,100,250, is_age_skewed, 100)
+	# create_1_to_n_sum_results("125_exp5_skewed", sim_thresh,sim_thresh,sim_thresh,user_n,user_n,user_n,user_n,100,225, is_age_skewed, 125)
+	# create_1_to_n_sum_results("150_exp4_skewed", sim_thresh,sim_thresh,sim_thresh,user_n,user_n,user_n,user_n,100,300, is_age_skewed, 150)
+	# create_1_to_n_sum_results("175_exp4_skewed", sim_thresh,sim_thresh,sim_thresh,user_n,user_n,user_n,user_n,100,300, is_age_skewed, 175)
 
 	# sim thresh level = 1, optimal
 	bp_width1, naive_width1, sampled_width1 = experiment2_width_helper("25_exp5_skewed")
@@ -402,13 +404,13 @@ def show_experiment_5_balanced(experiment_name, user_n, sim_thresh, is_age_skewe
 	plt.show()
 
 def show_experiment_5_skewed(experiment_name, user_n, sim_thresh, is_age_skewed=False):
-	create_skewed_1_to_n_sum_results("25_exp5_skewed", sim_thresh,sim_thresh,sim_thresh,user_n,user_n,user_n,user_n,100,100, is_age_skewed, 25)
-	create_skewed_1_to_n_sum_results("50_exp5_skewed", sim_thresh,sim_thresh,sim_thresh,user_n,user_n,user_n,user_n,100,150, is_age_skewed, 50)
-	create_skewed_1_to_n_sum_results("75_exp5_skewed", sim_thresh,sim_thresh,sim_thresh,user_n,user_n,user_n,user_n,100,200, is_age_skewed, 75)
-	create_skewed_1_to_n_sum_results("100_exp5_skewed", sim_thresh,sim_thresh,sim_thresh,user_n,user_n,user_n,user_n,100,250, is_age_skewed, 100)
-	create_skewed_1_to_n_sum_results("125_exp5_skewed", sim_thresh,sim_thresh,sim_thresh,user_n,user_n,user_n,user_n,100,225, is_age_skewed, 125)
-	create_skewed_1_to_n_sum_results("150_exp4_skewed", sim_thresh,sim_thresh,sim_thresh,user_n,user_n,user_n,user_n,100,300, is_age_skewed, 150)
-	create_skewed_1_to_n_sum_results("175_exp4_skewed", sim_thresh,sim_thresh,sim_thresh,user_n,user_n,user_n,user_n,100,300, is_age_skewed, 175)
+	# create_skewed_1_to_n_sum_results("25_exp5_skewed", sim_thresh,sim_thresh,sim_thresh,user_n,user_n,user_n,user_n,100,100, is_age_skewed, 25)
+	# create_skewed_1_to_n_sum_results("50_exp5_skewed", sim_thresh,sim_thresh,sim_thresh,user_n,user_n,user_n,user_n,100,150, is_age_skewed, 50)
+	# create_skewed_1_to_n_sum_results("75_exp5_skewed", sim_thresh,sim_thresh,sim_thresh,user_n,user_n,user_n,user_n,100,200, is_age_skewed, 75)
+	# create_skewed_1_to_n_sum_results("100_exp5_skewed", sim_thresh,sim_thresh,sim_thresh,user_n,user_n,user_n,user_n,100,250, is_age_skewed, 100)
+	# create_skewed_1_to_n_sum_results("125_exp5_skewed", sim_thresh,sim_thresh,sim_thresh,user_n,user_n,user_n,user_n,100,225, is_age_skewed, 125)
+	# create_skewed_1_to_n_sum_results("150_exp4_skewed", sim_thresh,sim_thresh,sim_thresh,user_n,user_n,user_n,user_n,100,300, is_age_skewed, 150)
+	# create_skewed_1_to_n_sum_results("175_exp4_skewed", sim_thresh,sim_thresh,sim_thresh,user_n,user_n,user_n,user_n,100,300, is_age_skewed, 175)
 
 	# sim thresh level = 1, optimal
 	bp_width1, naive_width1, sampled_width1 = experiment2_width_helper("25_exp5_skewed")
