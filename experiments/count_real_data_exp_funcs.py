@@ -14,13 +14,94 @@ import numpy as np
 import networkx as nx
 import experiment_funcs
 import one_to_n
+import sum_real_data_exp_funcs
 from Matching import core
 from Matching import analyze
 from Matching import matcher
 from Matching import core_scholar
+from Matching import core_abt_buy
 import textdistance
 import editdistance
 import collections
+import re
+
+
+def clean_data(datafile, new_filename):
+	trim = re.compile(r'[^\d]+')
+	# reading the csv file
+	df = pd.read_csv(datafile, encoding='latin-1')
+	# updating the column value/data
+	df['price'].apply(lambda x: x.translate(str.maketrans('', '', ' \n\t\r')) if isinstance(x, float)==False else x)
+	# df['price'] = df['price'].apply(lambda x: x.rstrip() if isinstance(x, str) else x)
+	# df['price'] = df['price'].strip()
+	# df['price'] = df['price'].replace({'\$':''}, regex = True)
+	# df['price'] = df['price'].replace('.', '')
+	# df['price'] = df['price'].replace(',', '')
+	df['price'] = df['price'].replace(np.nan, 0)
+	# print(df['price'][])
+	# df['price'] = float(int(df['price']))
+	# df['price'].apply(lambda x: int(x))
+	df['price'].apply(lambda x: float(x))
+	# for index, row in df.iterrows():
+	# 	if isinstance(row['price'], int) == False:
+			# row['price'] = row['price'].str.replace(',', '').str.replace('$', '').str.replace('.','')
+			# row['price'] = float(trim.sub('', row['price']))
+
+	# writing into the file
+	# np.fromstring(df.price.values.astype('|S7').tobytes().replace(b'$',b''), dtype='|S6')
+	df.to_csv(new_filename, index=False)
+
+def data_to_df_count_variation(file1, file2):
+	table_a = one_to_n.lat_convert_df(file1)
+	table_b = one_to_n.lat_convert_df(file2)
+
+	# Keep track of table 1 and table 2 items
+	records1 = table_a.to_records(index=False)
+	result_1 = list(records1)
+
+	records2 = table_b.to_records(index=False)
+	result_2 = list(records2)
+
+	joined_list = result_1 + result_2
+	tables_map = {}
+
+	for (col1,col2,col3,col4) in joined_list:
+		tables_map[col2] = col4
+
+	# print("TABLES MAP", tables_map, '\n\n')
+
+	return table_a, table_b, tables_map
+
+def create_perfect_mapping_count_variation(perf_matching_file, file1_amazon, file2_google):
+	perf_matching_df = one_to_n.lat_convert_df(perf_matching_file)
+	perf_match_records_1 = perf_matching_df.to_records(index=False)
+	result_perfmatch = list(perf_match_records_1)
+
+	perf_match_dict = {}
+
+	for val1,val2 in result_perfmatch:
+		perf_match_dict[val1] = val2
+
+	table_a = one_to_n.lat_convert_df(file1_amazon)
+	table_b = one_to_n.lat_convert_df(file2_google)
+
+	# Keep track of table 1 and table 2 items
+	records1 = table_a.to_records(index=False)
+	result_1 = list(records1)
+
+	records2 = table_b.to_records(index=False)
+	result_2 = list(records2)
+
+	joined_list = result_1 + result_2
+
+	joined_table = collections.defaultdict(list)
+
+	for col1,col2,col3,col4 in joined_list:
+		joined_table[col1].append((col2,col3,col4))
+
+	# print("PERF MATCHING DICT: ", perf_match_dict)
+
+	return result_perfmatch, joined_table, perf_match_dict
 
 def sum_total_weights(max_min_list):
 	# print("MAX-MIN LIST ", max_min_list)
@@ -35,7 +116,7 @@ def sum_total_weights(max_min_list):
 def find_perfect_count_result(perf_matching_file, file1_amazon, file2_google):
 	res_sum = 0
 
-	result_perfmatch, joined_table, perf_match_dict = create_perfect_mapping(perf_matching_file, file1_amazon, file2_google)
+	result_perfmatch, joined_table, perf_match_dict = sum_real_data_exp_funcs.create_perfect_mapping(perf_matching_file, file1_amazon, file2_google)
 	match_count = 0
 	for i in result_perfmatch:
 		if i[0] and i[1] in joined_table:
@@ -63,22 +144,32 @@ def find_perfect_count_result(perf_matching_file, file1_amazon, file2_google):
 def find_perfect_count_variation_result(perf_matching_file, file1_amazon, file2_google, filter_condition):
 	res_sum = 0
 
-	result_perfmatch, joined_table, perf_match_dict = create_perfect_mapping(perf_matching_file, file1_amazon, file2_google)
+	result_perfmatch, joined_table, perf_match_dict = create_perfect_mapping_count_variation(perf_matching_file, file1_amazon, file2_google)
 	match_count = 0
+	trim = re.compile(r'[^\d]+')
 	for i in result_perfmatch:
 		if i[0] and i[1] in joined_table:
 			# print(i[0], i[1])
 			if isinstance(joined_table[i[0]][0][-1], (np.floating, float)):
 				amazon_price = float(joined_table[i[0]][0][-1])
 			else:
-				amazon_price = float(joined_table[i[0]][0][-1].split(" ")[0])
+				amazon_price = float(trim.sub('', joined_table[i[0]][0][-1].split(" ")[0]))
+				if amazon_price == 'nan':
+					amazon_price = 0
+				# amazon_price = float(joined_table[i[0]][0][-1].split(" ")[0])
 
 			if isinstance(joined_table[i[1]][0][-1], (np.floating, float)):
 				google_price = float(joined_table[i[1]][0][-1])
 			else:
-				google_price = float(joined_table[i[1]][0][-1].split(" ")[0])
+				google_price = float(trim.sub('', joined_table[i[1]][0][-1].split(" ")[0]))
+				if google_price == 'nan':
+					google_price = 0
+				# google_price = float(joined_table[i[1]][0][-1].split(" ")[0])
 			# print("GOOGLE PRICE", google_price, "AMAZON PRICE", amazon_price)
-			res_sum += google_price + amazon_price
+			print(google_price)
+			print(amazon_price)
+			print(res_sum)
+			res_sum = google_price + amazon_price
 			if res_sum >= filter_condition:
 			# if i[0] or i[1] == 'b000fjs8sc':
 			# 	print("\n", "HERE IS TYPE: ", type(joined_table[i[0]][0][1]))
@@ -339,9 +430,9 @@ def realdata_count_random_sample_script(sim_threshold, sample_size, filename1, f
 
 def real_data_1_to_n_count_results(file1, file2, perf_match_file, result_filename, bp_sim, naive_sim, sampled_sim, actual_n, bp_n, naive_n, sampled_n, table_a_length, sample_num):
 	experiment_funcs.create_csv_table(result_filename)
-	table_a_non_duplicated, table_b, tables_map = data_to_df(file1, file2)
+	table_a_non_duplicated, table_b, tables_map = sum_real_data_exp_funcs.data_to_df(file1, file2)
 
-	result_perfmatch, joined_table, perf_match_dict = create_perfect_mapping(perf_match_file, file1, file2)
+	result_perfmatch, joined_table, perf_match_dict = sum_real_data_exp_funcs.create_perfect_mapping(perf_match_file, file1, file2)
 
 	# Find perfect matching sum outcome for evaluation of the model (NOTE: current 1-1 limitations.)
 	perfect_mapping_sum_result = find_perfect_count_result(perf_match_file, file1, file2)
@@ -402,16 +493,16 @@ def show_experiment_1_count(file1, file2, perf_match_file, experiment_name, sim_
 def count_variation_bip_script(table_a_non_duplicated, table_b, column_name, similarity_threshold, n_matches, tables_map, filter_condition,num_swaps=None):
 
 	now = datetime.datetime.now()
-	bipartite_graph_result = one_to_n.valcomp_treshold_updated_maximal_construct_graph(table_a_non_duplicated, table_b, column_name, similarity_threshold, n_matches, filter_condition)
+	bipartite_graph_result = one_to_n.valcomp_treshold_graph_construct_with_filter(table_a_non_duplicated, table_b, column_name, similarity_threshold, n_matches, filter_condition)
 	timing_tresh = (datetime.datetime.now()-now).total_seconds()
 	# print("---- Timing for Graph Construction with Treshold Constraint ----")
 	# print(timing_tresh,"seconds")
 
 	if num_swaps != None:
 		bipartite_graph_result = one_to_n.randomize_by_edge_swaps(bipartite_graph_result, num_swaps)
-		sum_weighted_graph = SUM_edit_edge_weight(bipartite_graph_result, tables_map)	
+		sum_weighted_graph = sum_real_data_exp_funcs.SUM_edit_edge_weight(bipartite_graph_result, tables_map)	
 	else:
-		sum_weighted_graph = SUM_edit_edge_weight(bipartite_graph_result, tables_map)
+		sum_weighted_graph = sum_real_data_exp_funcs.SUM_edit_edge_weight(bipartite_graph_result, tables_map)
 	# print(bipartite_graph_result.edges(data=True))
 	print(bipartite_graph_result.number_of_edges())
 	# print("\n\n 'SUM' MAXIMAL MATCHING:")
@@ -420,34 +511,34 @@ def count_variation_bip_script(table_a_non_duplicated, table_b, column_name, sim
 	timing_match_maximal = (datetime.datetime.now()-now).total_seconds()
 
 	now = datetime.datetime.now()
-	min_bipartite_graph_result = one_to_n.valcomp_treshold_updated_maximal_construct_graph(table_a_non_duplicated, table_b, column_name, similarity_threshold, n_matches, filter_condition)
+	min_bipartite_graph_result = one_to_n.valcomp_treshold_graph_construct_with_filter(table_a_non_duplicated, table_b, column_name, similarity_threshold, n_matches, filter_condition)
 	min_timing_tresh = (datetime.datetime.now()-now).total_seconds()
 	# print("---- Timing for Graph Construction with Treshold Constraint ----")
 	# print(timing_tresh,"seconds")
     
-	min_sum_weighted_graph = SUM_edit_edge_weight(min_bipartite_graph_result, tables_map)
+	min_sum_weighted_graph = sum_real_data_exp_funcs.SUM_edit_edge_weight(min_bipartite_graph_result, tables_map)
 	# print(nx.bipartite.is_bipartite(min_sum_weighted_graph))
 	# print("\n\n 'SUM' MINIMAL MATCHING RESULTS:")
 	# print("MIN EDGES:", min_sum_weighted_graph.edges())
 	# for u,v,d in min_sum_weighted_graph.edges(data=True):
 	# 	print("table a: ", u, "table b: ", v, "distance: ", d)
 	now = datetime.datetime.now()
-	matching_set_minimal = minimal_matching(min_sum_weighted_graph)
+	matching_set_minimal = sum_real_data_exp_funcs.minimal_matching(min_sum_weighted_graph)
 	timing_match_minimal = (datetime.datetime.now()-now).total_seconds()
 	# print("The Minimal Matching Set is:", matching_set_minimal, "\n")
 	# print("---- Timing for Matching (Done on the graph constructed with the treshold constraint) ----")
 	# print(timing_match_minimal,"seconds")
 	# print("The number of edges in the graph is:", sum_weighted_graph.number_of_edges(), "\n")
 
-	out_max = fetch_sum(sum_weighted_graph, matching_set_maximal)
-	out_min = fetch_sum(min_sum_weighted_graph, matching_set_minimal)
+	out_max = sum_real_data_exp_funcs.fetch_sum(sum_weighted_graph, matching_set_maximal)
+	out_min = sum_real_data_exp_funcs.fetch_sum(min_sum_weighted_graph, matching_set_minimal)
 	# print("OUT MIN: ", out_min)
 	# form_output = formatted_output(out_max,out_min)
     
-	total_max = sum_total_weights(out_max)
+	total_max = sum_real_data_exp_funcs.sum_total_weights(out_max)
 	print("BP Matching: Highest bound for maximum:", total_max)
 
-	total_min = sum_total_weights(out_min)
+	total_min = sum_real_data_exp_funcs.sum_total_weights(out_min)
 	print("BP Matching: Lowest bound for minimum:", total_min)
 	# print("BP MAX MATCHING OUTPUT WITH SUMS:", out_max)
 	print("BP Max Match Count: ", len(out_max))
@@ -459,15 +550,46 @@ def count_variation_bip_script(table_a_non_duplicated, table_b, column_name, sim
 
 	return total_max, total_min, timing_match_minimal+min_timing_tresh, timing_match_maximal+timing_tresh, out_max, out_min
 
+def full_evaluation_count_variation(bp_min,bp_max, naive_min,naive_max, sampled_min,sampled_max, perfect_mapping, perf_match_dict):
+	formatted_max_bp = experiment_funcs.fix_form_bp(bp_max)
+	formatted_min_bp = experiment_funcs.fix_form_bp(bp_min)
+
+	records_tuple = []
+
+	bp_min_fp, bp_min_fn, bp_min_acc = experiment_funcs.accuracy_eval(formatted_min_bp, perf_match_dict)
+	bp_max_fp, bp_max_fn, bp_max_acc = experiment_funcs.accuracy_eval(formatted_max_bp, perf_match_dict)
+
+	naive_min_fp, naive_min_fn, naive_min_acc = core_abt_buy.eval_matching(naive_min)
+	naive_max_fp, naive_max_fn, naive_max_acc = core_abt_buy.eval_matching(naive_max)
+
+	sampled_min_fp, sampled_min_fn, sampled_min_acc = core_abt_buy.eval_matching(sampled_min)
+	sampled_max_fp, sampled_max_fn, sampled_max_acc = core_abt_buy.eval_matching(sampled_max)
+
+	records_tuple.append((bp_min_fp, bp_min_fn, bp_min_acc))
+	records_tuple.append((bp_max_fp, bp_max_fn, bp_max_acc))
+	records_tuple.append((naive_min_fp, naive_min_fn, naive_min_acc))
+	records_tuple.append((naive_max_fp, naive_max_fn, naive_max_acc))
+	records_tuple.append((sampled_min_fp, sampled_min_fn, sampled_min_acc))
+	records_tuple.append((sampled_max_fp, sampled_max_fn, sampled_max_acc))
+
+	# print(records_tuple)
+	# print((records_tuple[0][0], records_tuple[0][1], records_tuple[0][2]))
+	# print((records_tuple[1][0], records_tuple[1][1], records_tuple[1][2])) 
+	# print((records_tuple[2][0], records_tuple[2][1], records_tuple[2][2])) 
+	# print((records_tuple[3][0], records_tuple[3][1], records_tuple[3][2]))
+	# print((records_tuple[4][0], records_tuple[4][1], records_tuple[4][2]))
+	# print((records_tuple[5][0], records_tuple[5][1], records_tuple[5][2]))
+	return records_tuple
+
 def count_variation_naive_script(sim_threshold, filename1, filename2, table_a_non_duplicated, n_matches, filename1_dup, filter_condition, num_swaps=None):
     # print(sim_threshold, filename1, filename2)
     table_a_unprocessed = one_to_n.lat_convert_df(filename1)
     table_a_dup = one_to_n.create_duplicates(table_a_unprocessed, "name", n_matches)
 
     table_a_dup.to_csv(filename1_dup, index = False, header=True)
-    cat_table1_dup = core.data_catalog(filename1_dup)
-    cat_table1 = core.data_catalog(filename1)
-    cat_table2 = core.data_catalog(filename2)
+    cat_table1_dup = core_abt_buy.data_catalog(filename1_dup)
+    cat_table1 = core_abt_buy.data_catalog(filename1)
+    cat_table2 = core_abt_buy.data_catalog(filename2)
     # print('Loaded catalogs.')
     
     
@@ -487,13 +609,13 @@ def count_variation_naive_script(sim_threshold, filename1, filename2, table_a_no
     print('Performing compare all match (jaccard distance)...')
     now = datetime.datetime.now()
     if num_swaps != None:
-    	max_compare_all_jaccard_match, res_for_eval_max = matcher.matching_with_random_swaps(num_swaps,n_matches, True, cat_table1,cat_table2,one_to_n.calc_jaccard, matcher.all, sim_threshold, filter_condition)
+    	max_compare_all_jaccard_match, res_for_eval_max = matcher.realdata_matcher_count_variation(num_swaps,n_matches, True, cat_table1,cat_table2,one_to_n.calc_jaccard, matcher.all, sim_threshold, filter_condition)
     else:
-    	max_compare_all_jaccard_match, res_for_eval_max = matcher.realdata_matcher_updated(n_matches, True, cat_table1,cat_table2,one_to_n.calc_jaccard, matcher.all, sim_threshold, filter_condition)
+    	max_compare_all_jaccard_match, res_for_eval_max = matcher.realdata_matcher_count_variation(n_matches, True, cat_table1,cat_table2,one_to_n.calc_jaccard, matcher.all, sim_threshold, filter_condition)
     naive_time_jaccard_max = (datetime.datetime.now()-now).total_seconds()
     print("Naive Jaccard Matching computation time taken: ", naive_time_jaccard_max, " seconds", "\n")
     # print(max_compare_all_jaccard_match)
-    print('Compare All Matcher (Jaccard Distance) Performance: ' + str(core.eval_matching(res_for_eval_max)))
+    # print('Compare All Matcher (Jaccard Distance) Performance: ' + str(core.eval_matching(res_for_eval_max)))
 
     # NAIVE MIN MATCHING
     # print("NAIVE MIN MATCHING")
@@ -512,12 +634,12 @@ def count_variation_naive_script(sim_threshold, filename1, filename2, table_a_no
     print('Performing compare all match (jaccard distance)...')
     now = datetime.datetime.now()
     if num_swaps != None:
-    	min_compare_all_jaccard_match, res_for_eval_min = matcher.matching_with_random_swaps(num_swaps,1, True, cat_table1,cat_table2,one_to_n.calc_jaccard, matcher.random_sample, sim_threshold, filter_condition)
+    	min_compare_all_jaccard_match, res_for_eval_min = matcher.realdata_matcher_count_variation(num_swaps,1, True, cat_table1,cat_table2,one_to_n.calc_jaccard, matcher.random_sample, sim_threshold, filter_condition)
     else:
-    	min_compare_all_jaccard_match, res_for_eval_min = matcher.realdata_matcher_updated(1, False, cat_table1,cat_table2,one_to_n.calc_jaccard, matcher.all, sim_threshold, filter_condition)
+    	min_compare_all_jaccard_match, res_for_eval_min = matcher.realdata_matcher_count_variation(1, False, cat_table1,cat_table2,one_to_n.calc_jaccard, matcher.all, sim_threshold, filter_condition)
     naive_time_jaccard_min = (datetime.datetime.now()-now).total_seconds()
     print("Naive Jaccard Matching computation time taken: ", naive_time_jaccard_min, " seconds")
-    print('Compare All Matcher (Jaccard Distance) Performance: ' + str(core.eval_matching(res_for_eval_min)))
+    # print('Compare All Matcher (Jaccard Distance) Performance: ' + str(core.eval_matching(res_for_eval_min)))
 
 
     naive_total_max = sum_total_weights(max_compare_all_jaccard_match)
@@ -535,9 +657,9 @@ def count_variation_random_sample_script(sim_threshold, sample_size, filename1, 
 
     table_a_dup = one_to_n.create_duplicates(table_a_non_duplicated, "id", n_matches)
     table_a_dup.to_csv(filename1_dup, index = False, header=True)
-    cat_table1_dup = core.data_catalog(filename1_dup)
-    cat_table1 = core.data_catalog(filename1)
-    cat_table2 = core.data_catalog(filename2)
+    cat_table1_dup = core_abt_buy.data_catalog(filename1_dup)
+    cat_table1 = core_abt_buy.data_catalog(filename1)
+    cat_table2 = core_abt_buy.data_catalog(filename2)
     # print('Loaded catalogs.')
     
     # RANDOM SAMPLING MAX MATCHING
@@ -555,12 +677,12 @@ def count_variation_random_sample_script(sim_threshold, sample_size, filename1, 
     print('Performing random sample match (jaccard distance)...')
     now = datetime.datetime.now()
     if num_swaps != None:
-    	max_compare_sampled_jaccard_match, res_for_eval_max = matcher.matching_with_random_swaps(num_swaps,n_matches, True, cat_table1,cat_table2,one_to_n.calc_jaccard, matcher.random_sample, sim_threshold, filter_condition, sample_size)
+    	max_compare_sampled_jaccard_match, res_for_eval_max = matcher.realdata_matcher_count_variation(num_swaps,n_matches, True, cat_table1,cat_table2,one_to_n.calc_jaccard, matcher.random_sample, sim_threshold, filter_condition, sample_size)
     else:
-    	max_compare_sampled_jaccard_match, res_for_eval_max = matcher.realdata_matcher_updated(n_matches, True, cat_table1,cat_table2,one_to_n.calc_jaccard, matcher.random_sample, sim_threshold, filter_condition,sample_size)
+    	max_compare_sampled_jaccard_match, res_for_eval_max = matcher.realdata_matcher_count_variation(n_matches, True, cat_table1,cat_table2,one_to_n.calc_jaccard, matcher.random_sample, sim_threshold, filter_condition,sample_size)
     sim_time_jaccard_max = (datetime.datetime.now()-now).total_seconds()
     print("Simulation-Based Jaccard Matching computation time taken: ", sim_time_jaccard_max, " seconds", "\n")
-    print('Random Sample Matcher (Jaccard Distance) Performance: ' + str(core.eval_matching(max_compare_sampled_jaccard_match)))
+    # print('Random Sample Matcher (Jaccard Distance) Performance: ' + str(core.eval_matching(max_compare_sampled_jaccard_match)))
 
 
     # RANDOM SAMPLING MIN MATCHING
@@ -578,12 +700,12 @@ def count_variation_random_sample_script(sim_threshold, sample_size, filename1, 
     print('Performing random sample match (jaccard distance)...')
     now = datetime.datetime.now()
     if num_swaps != None:
-    	min_compare_sampled_jaccard_match, res_for_eval_min = matcher.matching_with_random_swaps(num_swaps,1, True, cat_table1,cat_table2,one_to_n.calc_jaccard, matcher.random_sample, sim_threshold, filter_condition,sample_size)
+    	min_compare_sampled_jaccard_match, res_for_eval_min = matcher.realdata_matcher_count_variation(num_swaps,1, True, cat_table1,cat_table2,one_to_n.calc_jaccard, matcher.random_sample, sim_threshold, filter_condition,sample_size)
     else:
-    	min_compare_sampled_jaccard_match, res_for_eval_min = matcher.realdata_matcher_updated(1, False, cat_table1,cat_table2,one_to_n.calc_jaccard, matcher.random_sample, sim_threshold, filter_condition,sample_size)
+    	min_compare_sampled_jaccard_match, res_for_eval_min = matcher.realdata_matcher_count_variation(1, False, cat_table1,cat_table2,one_to_n.calc_jaccard, matcher.random_sample, sim_threshold, filter_condition,sample_size)
     sim_time_jaccard_min = (datetime.datetime.now()-now).total_seconds()
     print("Simulation-Based Jaccard Matching computation time taken: ", sim_time_jaccard_min, " seconds")
-    print('Random Sample Matcher (Jaccard Distance) Performance: ' + str(core.eval_matching(min_compare_sampled_jaccard_match)))
+    # print('Random Sample Matcher (Jaccard Distance) Performance: ' + str(core.eval_matching(min_compare_sampled_jaccard_match)))
 
     sampled_total_max = sum_total_weights(max_compare_sampled_jaccard_match)
     sampled_total_min = sum_total_weights(min_compare_sampled_jaccard_match)
@@ -593,9 +715,9 @@ def count_variation_random_sample_script(sim_threshold, sample_size, filename1, 
 
 def real_data_1_to_n_count_variation_results(file1, file2, perf_match_file, result_filename, bp_sim, naive_sim, sampled_sim, actual_n, bp_n, naive_n, sampled_n, table_a_length, sample_num, filter_condition):
 	experiment_funcs.create_csv_table(result_filename)
-	table_a_non_duplicated, table_b, tables_map = data_to_df(file1, file2)
+	table_a_non_duplicated, table_b, tables_map = data_to_df_count_variation(file1, file2)
 
-	result_perfmatch, joined_table, perf_match_dict = create_perfect_mapping(perf_match_file, file1, file2)
+	result_perfmatch, joined_table, perf_match_dict = create_perfect_mapping_count_variation(perf_match_file, file1, file2)
 
 	perfect_mapping_count_result = find_perfect_count_variation_result(perf_match_file, file1, file2, filter_condition)
 	
@@ -609,7 +731,7 @@ def real_data_1_to_n_count_variation_results(file1, file2, perf_match_file, resu
 	sampled_total_max, sampled_total_min, sampled_min_matching_time, sampled_max_matching_time, sampled_max, sampled_min, res_sampled_eval_max, res_sampled_eval_min = count_variation_random_sample_script(sampled_sim, sample_num, file1, file2, table_a_non_duplicated, sampled_n, "random_dup", filter_condition)
 
 	# Run Accuracy Evaluation
-	eval_records = full_evaluation(out_min, out_max, res_naive_eval_min, res_naive_eval_max, res_sampled_eval_min, res_naive_eval_max, result_perfmatch, perf_match_dict)
+	eval_records = full_evaluation_count_variation(out_min, out_max, res_naive_eval_min, res_naive_eval_max, res_sampled_eval_min, res_naive_eval_max, result_perfmatch, perf_match_dict)
 
 	perfect_count = count_total_weights(result_perfmatch)
 	bp_max_count = count_total_weights(out_max)
@@ -624,8 +746,8 @@ def real_data_1_to_n_count_variation_results(file1, file2, perf_match_file, resu
 
 
 # Same as SUM, until the COUNT of all matchings at the end of calculations.
-def show_experiment_1_count_variation(file1, file2, perf_match_file, experiment_name, sim_thresh):
-	real_data_1_to_n_count_variation_results(file1, file2, perf_match_file,"realdata_exp1_n3_count_variation", sim_thresh,sim_thresh,sim_thresh,3,3,3,3,100, 100)
+def show_experiment_1_count_variation(file1, file2, perf_match_file, experiment_name, sim_thresh, filter_condition):
+	real_data_1_to_n_count_variation_results(file1, file2, perf_match_file,"realdata_exp1_n3_count_variation", sim_thresh,sim_thresh,sim_thresh,3,3,3,3,100, 100, filter_condition)
 	# n = 1
 	bp_min_med, bp_max_med, naive_min_med, naive_max_med, sampled_min_med, sampled_max_med, perf_threshold = exp1_helper("realdata_exp1_n3_count_variation.csv")
 	minThreshold = [bp_min_med, naive_min_med, sampled_min_med]
@@ -661,4 +783,6 @@ def show_experiment_1_count_variation(file1, file2, perf_match_file, experiment_
 	plt.savefig(experiment_name, dpi=300)
 	plt.show()
 
-real_data_exp_funcs.show_experiment_1_count_variation('../Amazon-GoogleProducts/Amazon.csv', '../Amazon-GoogleProducts/GoogleProducts.csv', '../Amazon-GoogleProducts/Amzon_GoogleProducts_perfectMapping.csv', 'COUNT: Max n = 3, True n <= 3', 0.3)
+clean_data('../Abt-Buy/Abt.csv', '../Abt-Buy/modified_abt.csv')
+clean_data('../Abt-Buy/Buy.csv', '../Abt-Buy/modified_buy.csv')
+show_experiment_1_count_variation('../Abt-Buy/modified_abt.csv', '../Abt-Buy/modified_buy.csv', '../Abt-Buy/abt_buy_perfectMapping.csv', 'COUNT: Max n = 3, True n <= 3', 0.3, 10)

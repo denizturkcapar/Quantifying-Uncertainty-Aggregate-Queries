@@ -166,8 +166,11 @@ def realdata_matcher_count_variation(num_matches, is_max, d1, d2, distance_fn, s
 			# print("M1: ", e1['name'], "M2: ", e2['name'],"DIST: ", distance, "REQ:", required_distance)
 			# if distance != 0:
 			# 	print("M1: ", e1['name'], "M2: ", e2['name'], "DIST: ", distance)
-			val1 = trim.sub('', e1['price'])
-			val2 = trim.sub('', e2['price'])
+			# val1 = trim.sub('', e1['price'])
+			# val2 = trim.sub('', e2['price'])
+			val1 = float(e1['price'])
+			val2 = float(e2['price'])
+
 			if distance >= required_distance and val1 + val2 >= filter_condition:
 				count_total = 1
 				match_map[e1['name']].append((e1['name'],e2['name'], count_total))
