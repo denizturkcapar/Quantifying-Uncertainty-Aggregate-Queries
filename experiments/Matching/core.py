@@ -62,8 +62,8 @@ def eval_matching(matching):
     for m in matches:
         if m not in proposed_matches:
             fn.add(m)
-    print("TP: ", len(tp))
-    print("FP: ", len(fp))
+    # print("TP: ", len(tp))
+    # print("FP: ", len(fp))
 
     try:
         prec = len(tp)/(len(tp) + len(fp))
@@ -80,9 +80,10 @@ def eval_matching(matching):
     except ZeroDivisionError:
         accuracy = 0
 
-    print(prec)
-    print(rec)
+    # print(prec)
+    # print(rec)
 
-    return {'false positive': round(1-prec,2), 
-            'false negative': round(1-rec,2),
-            'accuracy': accuracy }
+    false_p = round(1-prec,2)
+    false_n = round(1-rec,2)
+
+    return false_p, false_n, accuracy

@@ -119,6 +119,71 @@ def realdata_matcher_updated(num_matches, is_max, d1, d2, distance_fn, sampler_f
 		res = extract_bottom_1(match_map)
 	return res, res_without_sum
 
+
+def realdata_matcher_count(num_matches, is_max, d1, d2, distance_fn, sampler_fn, required_distance, sample_size=100):
+	res_without_count = []
+	# match = []
+	match_map = defaultdict(list)
+	# print("DF1: ", d1)
+	# print("DF2 ", d2)
+	trim = re.compile(r'[^\d.,]+')
+	for e1 in d1:
+
+		for e2 in sampler_fn(d2, sample_size):
+			# print("M1: ", e1['name'], "M2: ", e2['name'])
+			distance = calc_max_weight_jaccard(str(e1['name']).lower(), str(e2['name']).lower(), distance_fn)
+			# print("M1: ", e1['name'], "M2: ", e2['name'],"DIST: ", distance, "REQ:", required_distance)
+			# if distance != 0:
+			# 	print("M1: ", e1['name'], "M2: ", e2['name'], "DIST: ", distance)
+			if distance >= required_distance:
+				count_total = 1
+				match_map[e1['name']].append((e1['name'],e2['name'], count_total))
+				# match.append((e1['name'],e2['name'], sum_total))
+
+				res_without_count.append((e1['id'], e2['id']))
+
+	for k,v in match_map.items():
+		match_map[k] = sorted(v,key=lambda x: x[-1], reverse=True)
+
+	if is_max == True:
+		res = extract_top_n(match_map,num_matches)
+	else:
+		res = extract_bottom_1(match_map)
+	return res, res_without_count
+
+def realdata_matcher_count_variation(num_matches, is_max, d1, d2, distance_fn, sampler_fn, required_distance, filter_condition, sample_size=100):
+	res_without_count = []
+	# match = []
+	match_map = defaultdict(list)
+	# print("DF1: ", d1)
+	# print("DF2 ", d2)
+	trim = re.compile(r'[^\d.,]+')
+	for e1 in d1:
+
+		for e2 in sampler_fn(d2, sample_size):
+			# print("M1: ", e1['name'], "M2: ", e2['name'])
+			distance = calc_max_weight_jaccard(str(e1['name']).lower(), str(e2['name']).lower(), distance_fn)
+			# print("M1: ", e1['name'], "M2: ", e2['name'],"DIST: ", distance, "REQ:", required_distance)
+			# if distance != 0:
+			# 	print("M1: ", e1['name'], "M2: ", e2['name'], "DIST: ", distance)
+			val1 = trim.sub('', e1['price'])
+			val2 = trim.sub('', e2['price'])
+			if distance >= required_distance and val1 + val2 >= filter_condition:
+				count_total = 1
+				match_map[e1['name']].append((e1['name'],e2['name'], count_total))
+				# match.append((e1['name'],e2['name'], sum_total))
+
+				res_without_count.append((e1['id'], e2['id']))
+
+	for k,v in match_map.items():
+		match_map[k] = sorted(v,key=lambda x: x[-1], reverse=True)
+
+	if is_max == True:
+		res = extract_top_n(match_map,num_matches)
+	else:
+		res = extract_bottom_1(match_map)
+	return res, res_without_count
+
 def extract_top_n(d,n):
 	res = []
 	for k,v in d.items():
