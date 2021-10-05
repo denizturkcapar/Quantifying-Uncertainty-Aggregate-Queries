@@ -501,8 +501,8 @@ def exp1_helper(results_file):
 	perf_threshold = df['Perfect Matching SUM'].median()
 
 	return bp_min_med, bp_max_med, naive_min_med, naive_max_med, sampled_min_med, sampled_max_med, perf_threshold
-def show_experiment_1_sum(file1, file2, perf_match_file, experiment_name, sim_thresh):
-	real_data_1_to_n_sum_results(file1, file2, perf_match_file,"realdata_exp1_n1", sim_thresh,sim_thresh,sim_thresh,3,3,3,3,100, 100)
+def show_experiment_1_sum(file1, file2, perf_match_file, experiment_name, sim_thresh, true_n, max_n):
+	real_data_1_to_n_sum_results(file1, file2, perf_match_file,"realdata_exp1_n1", sim_thresh,sim_thresh,sim_thresh,true_n,max_n,max_n,max_n,100, 100)
 	# n = 1
 	bp_min_med, bp_max_med, naive_min_med, naive_max_med, sampled_min_med, sampled_max_med, perf_threshold = exp1_helper("realdata_exp1_n1.csv")
 	minThreshold = [bp_min_med, naive_min_med, sampled_min_med]
@@ -539,14 +539,14 @@ def show_experiment_1_sum(file1, file2, perf_match_file, experiment_name, sim_th
 	plt.show()
 
 
-def show_experiment_2(file1, file2, experiment_name, sim_thresh, is_age_skewed=False, num_swaps=None):
+def show_experiment_2(file1, file2, perf_match_file, experiment_name, sim_thresh, is_age_skewed=False, num_swaps=None):
 	
-	real_data_1_to_n_sum_results(file1, file2, "realdata_exp2_n1", sim_thresh,sim_thresh,sim_thresh,1,1,1,1,100,100, is_age_skewed)
-	real_data_1_to_n_sum_results(file1, file2, "realdata_exp2_n2", sim_thresh,sim_thresh,sim_thresh,2,2,2,2,100,150, is_age_skewed)
-	real_data_1_to_n_sum_results(file1, file2, "realdata_exp2_n3", sim_thresh,sim_thresh,sim_thresh,3,3,3,3,100,200, is_age_skewed)
-	real_data_1_to_n_sum_results(file1, file2, "realdata_exp2_n4", sim_thresh,sim_thresh,sim_thresh,4,4,4,4,100,250, is_age_skewed)
-	real_data_1_to_n_sum_results(file1, file2, "realdata_exp2_n5", sim_thresh,sim_thresh,sim_thresh,5,5,5,5,100,300, is_age_skewed)
-	real_data_1_to_n_sum_results(file1, file2, "realdata_exp2_n6", sim_thresh,sim_thresh,sim_thresh,6,6,6,6,100,300, is_age_skewed)
+	real_data_1_to_n_sum_results(file1, file2, perf_match_file, "realdata_exp2_n1", sim_thresh,sim_thresh,sim_thresh,1,1,1,1,100,100)
+	real_data_1_to_n_sum_results(file1, file2, perf_match_file, "realdata_exp2_n2", sim_thresh,sim_thresh,sim_thresh,2,2,2,2,100,150)
+	real_data_1_to_n_sum_results(file1, file2, perf_match_file, "realdata_exp2_n3", sim_thresh,sim_thresh,sim_thresh,3,3,3,3,100,200)
+	real_data_1_to_n_sum_results(file1, file2, perf_match_file, "realdata_exp2_n4", sim_thresh,sim_thresh,sim_thresh,4,4,4,4,100,250)
+	real_data_1_to_n_sum_results(file1, file2, perf_match_file, "realdata_exp2_n5", sim_thresh,sim_thresh,sim_thresh,5,5,5,5,100,300)
+	real_data_1_to_n_sum_results(file1, file2, perf_match_file, "realdata_exp2_n6", sim_thresh,sim_thresh,sim_thresh,6,6,6,6,100,300)
 	# 1-1
 	bp_width1, naive_width1, sampled_width1 = model_overestimation_calc_helper("realdata_exp2_n1")
 	#1-2
@@ -589,9 +589,9 @@ def model_overestimation_calc_helper(results_file):
 	# sampled_min_med = df1['Sampled Min Matching'].median()
 	sampled_max_med = df1['Sampled Max Matching'].median()
 	perf_threshold = df1['Perfect Matching SUM'].median()
-	bp_width1 = (bp_max_med - perf_threshold) / perf_threshold
-	naive_width1 = (naive_max_med - perf_threshold) / perf_threshold
-	sampled_width1 = (sampled_max_med - perf_threshold) / perf_threshold
+	bp_acc_metric = (bp_max_med - perf_threshold) / perf_threshold
+	naive_acc_metric = (naive_max_med - perf_threshold) / perf_threshold
+	sampled_acc_metric = (sampled_max_med - perf_threshold) / perf_threshold
 
 	return bp_acc_metric, naive_acc_metric, sampled_acc_metric
 
@@ -637,7 +637,7 @@ def model_overestimation_calc_helper(results_file):
 # 	plt.show()
 
 
-def show_experiment_4(experiment_name, user_n, is_age_skewed=False, num_swaps=None):
+def show_experiment_4(file1, file2, experiment_name, user_n, is_age_skewed=False, num_swaps=None):
 	
 	real_data_1_to_n_sum_results(file1, file2, "1_exp4_realdata", 0.2,0.2,0.2,user_n,user_n,user_n,user_n,100,100, is_age_skewed, num_swaps)
 	real_data_1_to_n_sum_results(file1, file2, "2_exp4_realdata", 0.17,0.17,0.17,user_n,user_n,user_n,user_n,100,150, is_age_skewed, num_swaps)

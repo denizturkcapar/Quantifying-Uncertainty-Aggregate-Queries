@@ -38,7 +38,7 @@ def amazon_catalog():
 
 
 def eval_matching(matching):
-    f = open('Matching/data/Amzon_GoogleProducts_perfectMapping.csv', 'r', encoding = "ISO-8859-1")
+    f = open('Matching/google-amazon-data/Amzon_GoogleProducts_perfectMapping.csv', 'r', encoding = "ISO-8859-1")
     reader = csv.reader(f, delimiter=',', quotechar='"')
     matches = set()
     proposed_matches = set()

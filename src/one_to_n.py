@@ -272,6 +272,50 @@ def valcomp_treshold_graph_construct_with_filter(file_one, file_n, col_to_dup, t
             
     return bipartite_graph
 
+
+def valcomp_treshold_graph_construct_abt_buy_sum(file_one, file_n, col_to_dup, treshold_decimal, n_matches):
+    table_a_unprocessed = convert_df(file_one)
+    table_b_unprocessed = convert_df(file_n)
+    bipartite_graph = nx.Graph()
+    
+    table_a_unprocessed = create_duplicates(table_a_unprocessed, col_to_dup, n_matches)
+
+    table_a = make_dict(table_a_unprocessed)
+    table_b = make_dict(table_b_unprocessed)
+    trim = re.compile(r'[^\d]+')
+    i=0
+    
+    for key1, val1 in table_a.items():
+        comp_point_1 = val1[0].split("_")[0]
+
+        id1 = str(key1) + '_'+ str(comp_point_1) + "_" + str(val1[2]) + '_1'
+        for key2, val2 in table_b.items():
+
+            comp_point_2 = val2[0]
+            dist = calc_jaccard(str(comp_point_1).lower(),str(comp_point_2).lower())
+            i+=1
+            # print("first is: ", comp_point_1, "second is:", comp_point_2, "distance is:", dist)
+            if i%100000 == 0:
+                print(str(round(100*i/len(file_one)/len(file_n),2))+'% complete')
+            # print(val1[2])
+            # print(type(val1[2]))
+            # print(val2[2])
+            # print(type(val2[2]))
+
+            # val1 = float(trim.sub('', val1[2]))
+            # val2 = float(trim.sub('', val2[2]))
+            if dist >= treshold_decimal:
+                #add value to identifier to disitnguish two entries with different values
+                id2 = str(key2) + '_' + str(comp_point_2) + "_" + str(val2[2]) + '_2'
+                bipartite_graph.add_edge(id1, id2, weight=dist)
+                #edit distance and weight should be inv. prop.
+                #also adding 1 to denom. to prevent divide by 0
+                # add 1,2 to distinguish two key-value tuples belonging to different tables
+            else:
+                continue
+            
+    return bipartite_graph
+
 """
 *******************************************************************
 MINIMAL MATCHING
