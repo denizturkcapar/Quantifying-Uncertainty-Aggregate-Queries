@@ -19,7 +19,7 @@ def calc_max_weight_edit(key1, key2, distance_func):
 
 def calc_max_weight_jaccard(key1, key2, distance_func):
     # print("JACCARD DIST:", distance_func(key1,key2))
-    weight = distance_func(key1,key2)
+    weight = (1)/(1+distance_func(key1,key2))
     # print(weight)
     return weight
 
