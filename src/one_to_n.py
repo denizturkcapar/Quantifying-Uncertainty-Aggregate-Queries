@@ -56,18 +56,17 @@ Input:
   -- column: The column in the dataframe that will be marked with _1, _2, ..., _num
   -- num: A user inputted amount of duplicates to be found in the "n" labeled table.
 Output: A pandas dataframe object
-"""
+    """
 def create_duplicates(df, col, num):
 
-	# Repeat without index
-	df_repeated = pd.concat([df]*num,ignore_index=True)
+    # Repeat without index
+    df_repeated = pd.concat([df]*num,ignore_index=True)
+    n = len(df)
 
-	n = len(df)
+    for i, row in df_repeated.iterrows():
+    	df_repeated.loc[i, col] = str(row[col])+'_'+str(i//n)
 
-	for i, row in df_repeated.iterrows():
-		df_repeated.loc[i, col] = str(row[col])+'_'+str(i//n)
-        
-	return df_repeated
+    return df_repeated
 
 """
 
@@ -133,6 +132,27 @@ def make_dict(file):
     keys = V[0]
     values = zip(*V[1:])
     table = dict(zip(keys,values))
+    print("V: ", V)
+    print("\n values: ", values)
+    print("\n table: ", table)
+    return table
+
+"""
+
+Converts the dataframe into dictionary for better accuracy matching of pairs. 
+Assumption: The data has headers in the first row (description of what that column describes)
+
+Input: Any file
+Output: A dictionary in the form col1:col2 matching
+"""
+def make_dict_real_data_swapped_key(file):
+    V = list(file.to_dict('list').values())
+    keys = V[1]
+    values = zip(*V[2:])
+    table = dict(zip(keys,values))
+    # print("V: ", V)
+    # print("\n values: ", values)
+    # print("\n table: ", table)
     return table
 
 
@@ -184,6 +204,55 @@ def keycomp_treshold_updated_maximal_construct_graph(file_one, file_n, col_to_du
     return bipartite_graph
 
 """
+*****************************************************************
+MAXIMAL MATCHING
+*****************************************************************
+Constructs a maximal bipartite graph of the given two tables according to the treshold similarity.
+The bipartite matching graph only includes those that have passed a certain similarity treshold.
+The similarity metric takes into account the **keys** in this implementation
+
+Input: Any 2 files in any format
+Output: A Bipartite Graph with Maximal Weights
+"""
+def realdata_keycomp_treshold_updated_maximal_construct_graph(file_one, file_n, col_to_dup, treshold_decimal, n_matches):
+    table_a_unprocessed = convert_df(file_one)
+    table_b_unprocessed = convert_df(file_n)
+    bipartite_graph = nx.Graph()
+    
+    table_a_unprocessed = create_duplicates(table_a_unprocessed, col_to_dup,n_matches) # Assuming that the user inputs 3 duplicates
+
+    table_a = make_dict_real_data_swapped_key(table_a_unprocessed)
+    table_b = make_dict_real_data_swapped_key(table_b_unprocessed)
+    
+    i=0
+    
+    for key1, val1 in table_a.items():
+        comp_point_1 = key1.split("_")[0]
+
+        id1 = str(key1) + '_'+ str(val1) + '_1'
+        for key2, val2 in table_b.items():
+
+            comp_point_2 = key2.split("_")[0]
+            dist = calc_max_weight(str(comp_point_1).lower(),str(comp_point_2).lower())
+            i+=1
+            print("id1: ", id1, "key2", key2, "dist: ", dist)
+            # if i%100000 == 0:
+                # print(str(round(100*i/len(file_one)/len(file_n),2))+'% complete')
+            if dist <= treshold_decimal:
+
+                # print(comp_point_1, comp_point_2, dist)
+                #add value to identifier to disitnguish two entries with different values
+                id2 = str(key2) + '_' + str(val2) + '_2'
+                bipartite_graph.add_edge(id1, id2, weight=dist)
+                #edit distance and weight should be inv. prop.
+                #also adding 1 to denom. to prevent divide by 0
+                # add 1,2 to distinguish two key-value tuples belonging to different tables
+            else:
+                continue
+            
+    return bipartite_graph
+
+"""
 
 Constructs a maximal bipartite graph of the given two tables according to the treshold similarity.
 The bipartite matching graph only includes those that have passed a certain similarity treshold.
@@ -198,10 +267,10 @@ def valcomp_treshold_updated_maximal_construct_graph(file_one, file_n, col_to_du
     bipartite_graph = nx.Graph()
     
     table_a_unprocessed = create_duplicates(table_a_unprocessed, col_to_dup, n_matches)
-
-    table_a = make_dict(table_a_unprocessed)
-    table_b = make_dict(table_b_unprocessed)
-
+    print("UNPROCESSED TABLE: ", table_a_unprocessed)
+    table_a = make_dict_real_data_swapped_key(table_a_unprocessed)
+    table_b = make_dict_real_data_swapped_key(table_b_unprocessed)
+    print(table_a)
     i=0
     
     for key1, val1 in table_a.items():
@@ -236,8 +305,8 @@ def valcomp_treshold_graph_construct_with_filter(file_one, file_n, col_to_dup, t
     
     table_a_unprocessed = create_duplicates(table_a_unprocessed, col_to_dup, n_matches)
 
-    table_a = make_dict(table_a_unprocessed)
-    table_b = make_dict(table_b_unprocessed)
+    table_a = make_dict_real_data_swapped_key(table_a_unprocessed)
+    table_b = make_dict_real_data_swapped_key(table_b_unprocessed)
     trim = re.compile(r'[^\d]+')
     i=0
     
@@ -280,8 +349,8 @@ def valcomp_treshold_graph_construct_abt_buy_sum(file_one, file_n, col_to_dup, t
     
     table_a_unprocessed = create_duplicates(table_a_unprocessed, col_to_dup, n_matches)
 
-    table_a = make_dict(table_a_unprocessed)
-    table_b = make_dict(table_b_unprocessed)
+    table_a = make_dict_real_data_swapped_key(table_a_unprocessed)
+    table_b = make_dict_real_data_swapped_key(table_b_unprocessed)
     trim = re.compile(r'[^\d]+')
     i=0
     

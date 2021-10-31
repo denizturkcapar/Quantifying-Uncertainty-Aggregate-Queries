@@ -74,8 +74,8 @@ def data_to_df(file1, file2):
 
 def SUM_edit_edge_weight(bip_graph, lookup_table):
 	for u,v,d in bip_graph.edges(data=True):
-		splitted_u = u.split("_")[1]
-		splitted_v = v.split("_")[1]
+		splitted_u = u.split("_")[0]
+		splitted_v = v.split("_")[0]
 
 		val_u = lookup_table[splitted_u]
 		val_v = lookup_table[splitted_v]
@@ -232,25 +232,26 @@ def sum_total_weights(max_min_list):
 def realdata_sum_bip_script(table_a_non_duplicated, table_b, column_name, similarity_threshold, n_matches, tables_map, num_swaps=None):
 
 	now = datetime.datetime.now()
-	bipartite_graph_result = one_to_n.valcomp_treshold_updated_maximal_construct_graph(table_a_non_duplicated, table_b, column_name, similarity_threshold, n_matches)
+	bipartite_graph_result = one_to_n.realdata_keycomp_treshold_updated_maximal_construct_graph(table_a_non_duplicated, table_b, column_name, similarity_threshold, n_matches)
 	timing_tresh = (datetime.datetime.now()-now).total_seconds()
 	# print("---- Timing for Graph Construction with Treshold Constraint ----")
 	# print(timing_tresh,"seconds")
+	# print(bipartite_graph_result.edges())
 
 	if num_swaps != None:
 		bipartite_graph_result = one_to_n.randomize_by_edge_swaps(bipartite_graph_result, num_swaps)
 		sum_weighted_graph = SUM_edit_edge_weight(bipartite_graph_result, tables_map)	
 	else:
 		sum_weighted_graph = SUM_edit_edge_weight(bipartite_graph_result, tables_map)
-	# print(bipartite_graph_result.edges(data=True))
-	print(bipartite_graph_result.number_of_edges())
+	# print("BIPARTITE GRAPH RES: ", bipartite_graph_result.edges(data=True))
+	# print("BIPARTITE GRAPH RES: ", bipartite_graph_result.number_of_edges())
 	# print("\n\n 'SUM' MAXIMAL MATCHING:")
 	now = datetime.datetime.now()
 	matching_set_maximal = nx.algorithms.matching.max_weight_matching(sum_weighted_graph)
 	timing_match_maximal = (datetime.datetime.now()-now).total_seconds()
-
+	print("MATCHED BIP RESULT: ", matching_set_maximal)
 	now = datetime.datetime.now()
-	min_bipartite_graph_result = one_to_n.valcomp_treshold_updated_maximal_construct_graph(table_a_non_duplicated, table_b, column_name, similarity_threshold, n_matches)
+	min_bipartite_graph_result = one_to_n.realdata_keycomp_treshold_updated_maximal_construct_graph(table_a_non_duplicated, table_b, column_name, similarity_threshold, n_matches)
 	min_timing_tresh = (datetime.datetime.now()-now).total_seconds()
 	# print("---- Timing for Graph Construction with Treshold Constraint ----")
 	# print(timing_tresh,"seconds")
@@ -317,9 +318,9 @@ def realdata_sum_naive_script(sim_threshold, filename1, filename2, table_a_non_d
     print('Performing compare all match (jaccard distance)...')
     now = datetime.datetime.now()
     if num_swaps != None:
-    	max_compare_all_jaccard_match, res_for_eval_max = matcher.matching_with_random_swaps(num_swaps,n_matches, True, cat_table1,cat_table2,one_to_n.calc_jaccard, matcher.all, sim_threshold)
+    	max_compare_all_jaccard_match, res_for_eval_max = matcher.matching_with_random_swaps(num_swaps,n_matches, True, cat_table1,cat_table2,one_to_n.calc_max_weight, matcher.all, sim_threshold)
     else:
-    	max_compare_all_jaccard_match, res_for_eval_max = matcher.realdata_matcher_updated(n_matches, True, cat_table1,cat_table2,one_to_n.calc_jaccard, matcher.all, sim_threshold)
+    	max_compare_all_jaccard_match, res_for_eval_max = matcher.realdata_matcher_updated(n_matches, True, cat_table1,cat_table2,one_to_n.calc_max_weight, matcher.all, sim_threshold)
     naive_time_jaccard_max = (datetime.datetime.now()-now).total_seconds()
     print("Naive Jaccard Matching computation time taken: ", naive_time_jaccard_max, " seconds", "\n")
     # print(max_compare_all_jaccard_match)
@@ -568,7 +569,7 @@ def show_experiment_2(file1, file2, perf_match_file, experiment_name, sim_thresh
 	# plt.scatter(n,bp_widths, color='k')
 	plt.plot(n, bp_widths, '-o', color='r', label='Bipartite')
 	# plt.scatter(n,naive_widths, color='g')
-	plt.plot(n, naive_widths, '-o', color='g', label='Naive')
+	plt.plot(n, naive_widths, '-o', color='g', label='PC')
 	# plt.scatter(n,sample_widths, color='b')
 	plt.plot(n, sample_widths, '-o', color='b', label='Sampled')
 	plt.xlabel('N (User inputted Number of Matches)')

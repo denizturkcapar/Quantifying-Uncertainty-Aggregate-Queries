@@ -98,7 +98,7 @@ def realdata_matcher_updated(num_matches, is_max, d1, d2, distance_fn, sampler_f
 			# print("M1: ", e1['name'], "M2: ", e2['name'],"DIST: ", distance, "REQ:", required_distance)
 			# if distance != 0:
 			# 	print("M1: ", e1['name'], "M2: ", e2['name'], "DIST: ", distance)
-			if distance >= required_distance:
+			if distance <= required_distance:
 				val1 = trim.sub('', e1['price'])
 				val2 = trim.sub('', e2['price'])
 				# val1 = re.sub("[^0-9]", "", e1['price'])
