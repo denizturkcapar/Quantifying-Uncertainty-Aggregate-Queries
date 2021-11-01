@@ -65,20 +65,36 @@ def data_to_df(file1, file2):
 	joined_list = result_1 + result_2
 	tables_map = {}
 
+	data1_map = {}
+	data2_map = {}
+
+	for (col1,col2,col3,col4,col5) in result_1:
+		data1_map[col2] = col5
+
+	for (col1,col2,col3,col4,col5) in result_2:
+		data2_map[col2] = col5
+
 	for (col1,col2,col3,col4,col5) in joined_list:
 		tables_map[col2] = col5
 
 	# print("TABLES MAP", tables_map, '\n\n')
 
-	return table_a, table_b, tables_map
+	return table_a, table_b, tables_map, data1_map, data2_map
 
-def SUM_edit_edge_weight(bip_graph, lookup_table):
+def SUM_edit_edge_weight(bip_graph, data1_map, data2_map):
 	for u,v,d in bip_graph.edges(data=True):
 		splitted_u = u.split("_")[0]
 		splitted_v = v.split("_")[0]
 
-		val_u = lookup_table[splitted_u]
-		val_v = lookup_table[splitted_v]
+		if u.split("_")[1].isdigit() == True:
+			val_u = data1_map[splitted_u]
+			val_v = data2_map[splitted_v]
+		else:
+			val_u = data2_map[splitted_u]
+			val_v = data1_map[splitted_v]
+
+		# val_u = lookup_table[splitted_u]
+		# val_v = lookup_table[splitted_v]
 
 		if isinstance(val_u, (np.floating, float, int)):
 			val1 = float(val_u)
@@ -91,13 +107,13 @@ def SUM_edit_edge_weight(bip_graph, lookup_table):
 			val2 = float(val_v.split(" ")[0])
 
 		d['weight'] = val1 + val2
-		# print("splitted_u: ", splitted_u, "\n")
-		# print("splitted_v: ", splitted_v, "\n")
-		# print("val_u: ", val_u, "\n")
-		# print("val_v: ", val_v, "\n")
-		# print("val1: ", val1, "\n")
-		# print("val2: ", val2, "\n")
-		# print("weight: ", d['weight'], "\n")
+		print("splitted_u: ", splitted_u, "\n")
+		print("splitted_v: ", splitted_v, "\n")
+		print("val_u: ", val_u, "\n")
+		print("val_v: ", val_v, "\n")
+		print("val1: ", val1, "\n")
+		print("val2: ", val2, "\n")
+		print("weight: ", d['weight'], "\n")
 
 	return bip_graph
 
@@ -229,7 +245,7 @@ def sum_total_weights(max_min_list):
 		total += i[-1]
 	return total
 
-def realdata_sum_bip_script(table_a_non_duplicated, table_b, column_name, similarity_threshold, n_matches, tables_map, num_swaps=None):
+def realdata_sum_bip_script(table_a_non_duplicated, table_b, column_name, similarity_threshold, n_matches, tables_map, data1_map, data2_map, num_swaps=None):
 
 	now = datetime.datetime.now()
 	bipartite_graph_result = one_to_n.realdata_keycomp_treshold_updated_maximal_construct_graph(table_a_non_duplicated, table_b, column_name, similarity_threshold, n_matches)
@@ -240,9 +256,9 @@ def realdata_sum_bip_script(table_a_non_duplicated, table_b, column_name, simila
 
 	if num_swaps != None:
 		bipartite_graph_result = one_to_n.randomize_by_edge_swaps(bipartite_graph_result, num_swaps)
-		sum_weighted_graph = SUM_edit_edge_weight(bipartite_graph_result, tables_map)	
+		sum_weighted_graph = SUM_edit_edge_weight(bipartite_graph_result, data1_map, data2_map)	
 	else:
-		sum_weighted_graph = SUM_edit_edge_weight(bipartite_graph_result, tables_map)
+		sum_weighted_graph = SUM_edit_edge_weight(bipartite_graph_result, data1_map, data2_map)
 	# print("BIPARTITE GRAPH RES: ", bipartite_graph_result.edges(data=True))
 	# print("BIPARTITE GRAPH RES: ", bipartite_graph_result.number_of_edges())
 	# print("\n\n 'SUM' MAXIMAL MATCHING:")
@@ -256,7 +272,7 @@ def realdata_sum_bip_script(table_a_non_duplicated, table_b, column_name, simila
 	# print("---- Timing for Graph Construction with Treshold Constraint ----")
 	# print(timing_tresh,"seconds")
     
-	min_sum_weighted_graph = SUM_edit_edge_weight(min_bipartite_graph_result, tables_map)
+	min_sum_weighted_graph = SUM_edit_edge_weight(min_bipartite_graph_result, data1_map, data2_map)
 	# print(nx.bipartite.is_bipartite(min_sum_weighted_graph))
 	# print("\n\n 'SUM' MINIMAL MATCHING RESULTS:")
 	# print("MIN EDGES:", min_sum_weighted_graph.edges())
@@ -466,7 +482,7 @@ def full_evaluation(bp_min,bp_max, naive_min,naive_max, sampled_min,sampled_max,
 
 def real_data_1_to_n_sum_results(file1, file2, perf_match_file, result_filename, bp_sim, naive_sim, sampled_sim, actual_n, bp_n, naive_n, sampled_n, table_a_length, sample_num):
 	experiment_funcs.create_csv_table(result_filename)
-	table_a_non_duplicated, table_b, tables_map = data_to_df(file1, file2)
+	table_a_non_duplicated, table_b, tables_map, data1_map, data2_map = data_to_df(file1, file2)
 
 	result_perfmatch, joined_table, perf_match_dict = create_perfect_mapping(perf_match_file, file1, file2)
 
@@ -474,7 +490,7 @@ def real_data_1_to_n_sum_results(file1, file2, perf_match_file, result_filename,
 	perfect_mapping_sum_result = find_perfect_sum_result(perf_match_file, file1, file2)
 	
 	# Bipartite Matching Script
-	total_max, total_min, bip_min_matching_time, bip_max_matching_time, out_max, out_min = realdata_sum_bip_script(table_a_non_duplicated, table_b, "name", bp_sim, bp_n, tables_map)
+	total_max, total_min, bip_min_matching_time, bip_max_matching_time, out_max, out_min = realdata_sum_bip_script(table_a_non_duplicated, table_b, "name", bp_sim, bp_n, data1_map, data2_map)
 
 	# Run Naive Matching Script
 	naive_total_max, naive_total_min, naive_min_matching_time, naive_max_matching_time, naive_max, naive_min, res_naive_eval_max, res_naive_eval_min = realdata_sum_naive_script(naive_sim, file1, file2, table_a_non_duplicated, naive_n, "naive_dup")
