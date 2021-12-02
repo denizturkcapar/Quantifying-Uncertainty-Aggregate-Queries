@@ -105,10 +105,8 @@ def realdata_matcher_updated(num_matches, is_max, d1, d2, distance_fn, sampler_f
 				# val2 =re.sub("[^0-9]", "", e2['price'])
 				# print("M1: ", e1['name'], "M2: ", e2['name'], e1['price'], e2['price'], "val1", val1, "val2", val2,"DIST: ", distance)
 				sum_total = float(val1) + float(val2)
-				match_map[e1['name']].append((e1['name'],e2['name'], sum_total))
+				match_map[e1['name']].append((e1['name'],e2['name'], e1['id'], e2['id'], sum_total))
 				# match.append((e1['name'],e2['name'], sum_total))
-
-				res_without_sum.append((e1['id'], e2['id']))
 
 	for k,v in match_map.items():
 		match_map[k] = sorted(v,key=lambda x: x[-1], reverse=True)
@@ -117,6 +115,14 @@ def realdata_matcher_updated(num_matches, is_max, d1, d2, distance_fn, sampler_f
 		res = extract_top_n(match_map,num_matches)
 	else:
 		res = extract_bottom_1(match_map)
+
+	# record id's after extract methods 
+	for (m1, m2, id1, id2, sim) in res:
+		print("id1: ", id1, "id2: ", id2)
+		res_without_sum.append((id1, id2))
+	print("RES", res)
+	print("RES_WITHOUT_SUM", res_without_sum)
+
 	return res, res_without_sum
 
 
@@ -125,7 +131,7 @@ def realdata_matcher_count(num_matches, is_max, d1, d2, distance_fn, sampler_fn,
 	# match = []
 	match_map = defaultdict(list)
 	# print("DF1: ", d1)
-	# print("DF2 ", d2)
+	# print("DF2: ", d2)
 	trim = re.compile(r'[^\d.,]+')
 	for e1 in d1:
 
@@ -135,12 +141,10 @@ def realdata_matcher_count(num_matches, is_max, d1, d2, distance_fn, sampler_fn,
 			# print("M1: ", e1['name'], "M2: ", e2['name'],"DIST: ", distance, "REQ:", required_distance)
 			# if distance != 0:
 			# 	print("M1: ", e1['name'], "M2: ", e2['name'], "DIST: ", distance)
-			if distance >= required_distance:
+			if distance <= required_distance:
 				count_total = 1
-				match_map[e1['name']].append((e1['name'],e2['name'], count_total))
+				match_map[e1['name']].append((e1['name'],e2['name'], e1['id'], e2['id'], count_total))
 				# match.append((e1['name'],e2['name'], sum_total))
-
-				res_without_count.append((e1['id'], e2['id']))
 
 	for k,v in match_map.items():
 		match_map[k] = sorted(v,key=lambda x: x[-1], reverse=True)
@@ -149,6 +153,10 @@ def realdata_matcher_count(num_matches, is_max, d1, d2, distance_fn, sampler_fn,
 		res = extract_top_n(match_map,num_matches)
 	else:
 		res = extract_bottom_1(match_map)
+
+	for (m1, m2, id1, id2, sim) in res:
+		res_without_sum.append((id1, id2))
+
 	return res, res_without_count
 
 def realdata_matcher_count_variation(num_matches, is_max, d1, d2, distance_fn, sampler_fn, required_distance, filter_condition, sample_size=100):
@@ -171,12 +179,10 @@ def realdata_matcher_count_variation(num_matches, is_max, d1, d2, distance_fn, s
 			val1 = float(e1['price'])
 			val2 = float(e2['price'])
 
-			if distance >= required_distance and val1 + val2 >= filter_condition:
+			if distance <= required_distance and val1 + val2 >= filter_condition:
 				count_total = 1
-				match_map[e1['name']].append((e1['name'],e2['name'], count_total))
+				match_map[e1['name']].append((e1['name'],e2['name'], e1['id'], e2['id'], count_total))
 				# match.append((e1['name'],e2['name'], sum_total))
-
-				res_without_count.append((e1['id'], e2['id']))
 
 	for k,v in match_map.items():
 		match_map[k] = sorted(v,key=lambda x: x[-1], reverse=True)
@@ -185,6 +191,10 @@ def realdata_matcher_count_variation(num_matches, is_max, d1, d2, distance_fn, s
 		res = extract_top_n(match_map,num_matches)
 	else:
 		res = extract_bottom_1(match_map)
+
+	for (m1, m2, id1, id2, sim) in res:
+		res_without_sum.append((id1, id2))
+
 	return res, res_without_count
 
 def extract_top_n(d,n):

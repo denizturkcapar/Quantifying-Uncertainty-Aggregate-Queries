@@ -96,12 +96,21 @@ def data_to_df_count_variation(file1, file2):
 	joined_list = result_1 + result_2
 	tables_map = {}
 
+	data1_map = {}
+	data2_map = {}
+
+	for (col1,col2,col3,col4) in result_1:
+		data1_map[col2] = col4
+
+	for (col1,col2,col3,col4) in result_2:
+		data2_map[col2] = col4
+
 	for (col1,col2,col3,col4) in joined_list:
 		tables_map[col2] = col4
 
 	# print("TABLES MAP", tables_map, '\n\n')
 
-	return table_a, table_b, tables_map
+	return table_a, table_b, tables_map, data1_map, data2_map
 
 def filter_perfect_mapping(result_perfmatch, joined_table, filter_condition):
 	filtered_list = []
@@ -309,7 +318,7 @@ def count_total_weights(max_min_list):
 def realdata_count_bip_script(table_a_non_duplicated, table_b, column_name, similarity_threshold, n_matches, tables_map, num_swaps=None):
 
 	now = datetime.datetime.now()
-	bipartite_graph_result = one_to_n.valcomp_treshold_updated_maximal_construct_graph(table_a_non_duplicated, table_b, column_name, similarity_threshold, n_matches)
+	bipartite_graph_result = one_to_n.realdata_keycomp_treshold_updated_maximal_construct_graph(table_a_non_duplicated, table_b, column_name, similarity_threshold, n_matches)
 	timing_tresh = (datetime.datetime.now()-now).total_seconds()
 	# print("---- Timing for Graph Construction with Treshold Constraint ----")
 	# print(timing_tresh,"seconds")
@@ -327,7 +336,7 @@ def realdata_count_bip_script(table_a_non_duplicated, table_b, column_name, simi
 	timing_match_maximal = (datetime.datetime.now()-now).total_seconds()
 
 	now = datetime.datetime.now()
-	min_bipartite_graph_result = one_to_n.valcomp_treshold_updated_maximal_construct_graph(table_a_non_duplicated, table_b, column_name, similarity_threshold, n_matches)
+	min_bipartite_graph_result = one_to_n.realdata_keycomp_treshold_updated_maximal_construct_graph(table_a_non_duplicated, table_b, column_name, similarity_threshold, n_matches)
 	min_timing_tresh = (datetime.datetime.now()-now).total_seconds()
 
 	min_sum_weighted_graph = COUNT_edit_edge_weight(min_bipartite_graph_result, tables_map)
@@ -411,65 +420,65 @@ def realdata_count_naive_script(sim_threshold, filename1, filename2, table_a_non
     return naive_total_max, naive_total_min, naive_time_jaccard_min, naive_time_jaccard_max, max_compare_all_jaccard_match, min_compare_all_jaccard_match, res_for_eval_max, res_for_eval_min
 
 
-def realdata_count_random_sample_script(sim_threshold, sample_size, filename1, filename2, table_a_non_duplicated, n_matches, filename1_dup,num_swaps=None):
+# def realdata_count_random_sample_script(sim_threshold, sample_size, filename1, filename2, table_a_non_duplicated, n_matches, filename1_dup,num_swaps=None):
 
-    table_a_dup = one_to_n.create_duplicates(table_a_non_duplicated, "id", n_matches)
-    table_a_dup.to_csv(filename1_dup, index = False, header=True)
-    cat_table1_dup = core_scholar.data_catalog(filename1_dup)
-    cat_table1 = core_scholar.data_catalog(filename1)
-    cat_table2 = core_scholar.data_catalog(filename2)
-    # print('Loaded catalogs.')
+#     table_a_dup = one_to_n.create_duplicates(table_a_non_duplicated, "id", n_matches)
+#     table_a_dup.to_csv(filename1_dup, index = False, header=True)
+#     cat_table1_dup = core_scholar.data_catalog(filename1_dup)
+#     cat_table1 = core_scholar.data_catalog(filename1)
+#     cat_table2 = core_scholar.data_catalog(filename2)
+#     # print('Loaded catalogs.')
     
-    # RANDOM SAMPLING MAX MATCHING
-    # print("RANDOM SAMPLE MAX MATCHING")
-    # print('Performing random sample match (edit distance)...')
-    # now = datetime.datetime.now()
-    # if num_swaps != None:
-    # 	max_compare_sampled_edit_match = matcher.matching_with_random_swaps(num_swaps,n_matches, True, cat_table1,cat_table2,editdistance.eval, matcher.random_sample, sim_threshold, sample_size)
-    # else:
-    # 	max_compare_sampled_edit_match = matcher.matcher_updated(n_matches, True, cat_table1,cat_table2,editdistance.eval, matcher.random_sample, sim_threshold, sample_size)
-    # sim_time_edit_max = (datetime.datetime.now()-now).total_seconds()
-    # print("Simulation-Based Edit Distance Matching computation time taken: ", sim_time_edit_max, " seconds")
-    #print('Random Sample Matcher (Edit Distance) Performance: ' + str(core.eval_matching(compare_all_edit_match)))
+#     # RANDOM SAMPLING MAX MATCHING
+#     # print("RANDOM SAMPLE MAX MATCHING")
+#     # print('Performing random sample match (edit distance)...')
+#     # now = datetime.datetime.now()
+#     # if num_swaps != None:
+#     # 	max_compare_sampled_edit_match = matcher.matching_with_random_swaps(num_swaps,n_matches, True, cat_table1,cat_table2,editdistance.eval, matcher.random_sample, sim_threshold, sample_size)
+#     # else:
+#     # 	max_compare_sampled_edit_match = matcher.matcher_updated(n_matches, True, cat_table1,cat_table2,editdistance.eval, matcher.random_sample, sim_threshold, sample_size)
+#     # sim_time_edit_max = (datetime.datetime.now()-now).total_seconds()
+#     # print("Simulation-Based Edit Distance Matching computation time taken: ", sim_time_edit_max, " seconds")
+#     #print('Random Sample Matcher (Edit Distance) Performance: ' + str(core.eval_matching(compare_all_edit_match)))
 
-    print('Performing random sample match (jaccard distance)...')
-    now = datetime.datetime.now()
-    if num_swaps != None:
-    	max_compare_sampled_jaccard_match, res_for_eval_max = matcher.matching_with_random_swaps(num_swaps,n_matches, True, cat_table1,cat_table2,one_to_n.calc_jaccard, matcher.random_sample, sim_threshold, sample_size)
-    else:
-    	max_compare_sampled_jaccard_match, res_for_eval_max = matcher.realdata_matcher_count(n_matches, True, cat_table1,cat_table2,one_to_n.calc_jaccard, matcher.random_sample, sim_threshold, sample_size)
-    sim_time_jaccard_max = (datetime.datetime.now()-now).total_seconds()
-    print("Simulation-Based Jaccard Matching computation time taken: ", sim_time_jaccard_max, " seconds", "\n")
-    # print('Random Sample Matcher (Jaccard Distance) Performance: ' + str(core_scholar.eval_matching(max_compare_sampled_jaccard_match)))
+#     print('Performing random sample match (jaccard distance)...')
+#     now = datetime.datetime.now()
+#     if num_swaps != None:
+#     	max_compare_sampled_jaccard_match, res_for_eval_max = matcher.matching_with_random_swaps(num_swaps,n_matches, True, cat_table1,cat_table2,one_to_n.calc_jaccard, matcher.random_sample, sim_threshold, sample_size)
+#     else:
+#     	max_compare_sampled_jaccard_match, res_for_eval_max = matcher.realdata_matcher_count(n_matches, True, cat_table1,cat_table2,one_to_n.calc_jaccard, matcher.random_sample, sim_threshold, sample_size)
+#     sim_time_jaccard_max = (datetime.datetime.now()-now).total_seconds()
+#     print("Simulation-Based Jaccard Matching computation time taken: ", sim_time_jaccard_max, " seconds", "\n")
+#     # print('Random Sample Matcher (Jaccard Distance) Performance: ' + str(core_scholar.eval_matching(max_compare_sampled_jaccard_match)))
 
 
-    # RANDOM SAMPLING MIN MATCHING
-    # print("RANDOM SAMPLE MIN MATCHING")
-    # print('Performing random sample match (edit distance)...')
-    # now = datetime.datetime.now()
-    # if num_swaps != None:
-    # 	min_compare_sampled_edit_match = matcher.matching_with_random_swaps(num_swaps,1, True, cat_table1,cat_table2,editdistance.eval, matcher.random_sample, sim_threshold, sample_size)
-    # else:
-    # 	min_compare_sampled_edit_match = matcher.matcher_updated(1, False, cat_table1,cat_table2,editdistance.eval, matcher.random_sample, sim_threshold, sample_size)
-    # sim_time_edit_min = (datetime.datetime.now()-now).total_seconds()
-    # print("Simulation-Based Edit Distance Matching computation time taken: ", sim_time_edit_min, " seconds")
-    #print('Random Sample Matcher (Edit Distance) Performance: ' + str(core.eval_matching(compare_all_edit_match)))
+#     # RANDOM SAMPLING MIN MATCHING
+#     # print("RANDOM SAMPLE MIN MATCHING")
+#     # print('Performing random sample match (edit distance)...')
+#     # now = datetime.datetime.now()
+#     # if num_swaps != None:
+#     # 	min_compare_sampled_edit_match = matcher.matching_with_random_swaps(num_swaps,1, True, cat_table1,cat_table2,editdistance.eval, matcher.random_sample, sim_threshold, sample_size)
+#     # else:
+#     # 	min_compare_sampled_edit_match = matcher.matcher_updated(1, False, cat_table1,cat_table2,editdistance.eval, matcher.random_sample, sim_threshold, sample_size)
+#     # sim_time_edit_min = (datetime.datetime.now()-now).total_seconds()
+#     # print("Simulation-Based Edit Distance Matching computation time taken: ", sim_time_edit_min, " seconds")
+#     #print('Random Sample Matcher (Edit Distance) Performance: ' + str(core.eval_matching(compare_all_edit_match)))
 
-    print('Performing random sample match (jaccard distance)...')
-    now = datetime.datetime.now()
-    if num_swaps != None:
-    	min_compare_sampled_jaccard_match, res_for_eval_min = matcher.matching_with_random_swaps(num_swaps,1, True, cat_table1,cat_table2,one_to_n.calc_jaccard, matcher.random_sample, sim_threshold, sample_size)
-    else:
-    	min_compare_sampled_jaccard_match, res_for_eval_min = matcher.realdata_matcher_count(1, False, cat_table1,cat_table2,one_to_n.calc_jaccard, matcher.random_sample, sim_threshold, sample_size)
-    sim_time_jaccard_min = (datetime.datetime.now()-now).total_seconds()
-    print("Simulation-Based Jaccard Matching computation time taken: ", sim_time_jaccard_min, " seconds")
-    # print('Random Sample Matcher (Jaccard Distance) Performance: ' + str(core_scholar.eval_matching(min_compare_sampled_jaccard_match)))
+#     print('Performing random sample match (jaccard distance)...')
+#     now = datetime.datetime.now()
+#     if num_swaps != None:
+#     	min_compare_sampled_jaccard_match, res_for_eval_min = matcher.matching_with_random_swaps(num_swaps,1, True, cat_table1,cat_table2,one_to_n.calc_jaccard, matcher.random_sample, sim_threshold, sample_size)
+#     else:
+#     	min_compare_sampled_jaccard_match, res_for_eval_min = matcher.realdata_matcher_count(1, False, cat_table1,cat_table2,one_to_n.calc_jaccard, matcher.random_sample, sim_threshold, sample_size)
+#     sim_time_jaccard_min = (datetime.datetime.now()-now).total_seconds()
+#     print("Simulation-Based Jaccard Matching computation time taken: ", sim_time_jaccard_min, " seconds")
+#     # print('Random Sample Matcher (Jaccard Distance) Performance: ' + str(core_scholar.eval_matching(min_compare_sampled_jaccard_match)))
 
-    sampled_total_max = count_total_weights(max_compare_sampled_jaccard_match)
-    sampled_total_min = count_total_weights(min_compare_sampled_jaccard_match)
-    # print("SAMPLED MAX Matching Bound: ", sampled_total_max, "\n")
-    # print("SAMPLED MIN Matching Bound: ", sampled_total_min)
-    return sampled_total_max, sampled_total_min, sim_time_jaccard_min, sim_time_jaccard_max, max_compare_sampled_jaccard_match, min_compare_sampled_jaccard_match, res_for_eval_max, res_for_eval_min
+#     sampled_total_max = count_total_weights(max_compare_sampled_jaccard_match)
+#     sampled_total_min = count_total_weights(min_compare_sampled_jaccard_match)
+#     # print("SAMPLED MAX Matching Bound: ", sampled_total_max, "\n")
+#     # print("SAMPLED MIN Matching Bound: ", sampled_total_min)
+#     return sampled_total_max, sampled_total_min, sim_time_jaccard_min, sim_time_jaccard_max, max_compare_sampled_jaccard_match, min_compare_sampled_jaccard_match, res_for_eval_max, res_for_eval_min
 
 def real_data_1_to_n_count_results(file1, file2, perf_match_file, result_filename, bp_sim, naive_sim, sampled_sim, actual_n, bp_n, naive_n, sampled_n, table_a_length, sample_num):
 	experiment_funcs.create_csv_table(result_filename)
@@ -487,7 +496,7 @@ def real_data_1_to_n_count_results(file1, file2, perf_match_file, result_filenam
 	naive_total_max, naive_total_min, naive_min_matching_time, naive_max_matching_time, naive_max, naive_min, res_naive_eval_max, res_naive_eval_min = realdata_count_naive_script(naive_sim, file1, file2, table_a_non_duplicated, naive_n, "naive_dup")
 		
 	# Run Random Matching Script
-	sampled_total_max, sampled_total_min, sampled_min_matching_time, sampled_max_matching_time, sampled_max, sampled_min, res_sampled_eval_max, res_sampled_eval_min = realdata_count_random_sample_script(sampled_sim, sample_num, file1, file2, table_a_non_duplicated, sampled_n, "random_dup")
+	# sampled_total_max, sampled_total_min, sampled_min_matching_time, sampled_max_matching_time, sampled_max, sampled_min, res_sampled_eval_max, res_sampled_eval_min = realdata_count_random_sample_script(sampled_sim, sample_num, file1, file2, table_a_non_duplicated, sampled_n, "random_dup")
 
 	# Run Accuracy Evaluation
 	eval_records = full_evaluation_count(out_min, out_max, res_naive_eval_min, res_naive_eval_max, res_sampled_eval_min, res_naive_eval_max, result_perfmatch, perf_match_dict)
@@ -516,7 +525,7 @@ def show_experiment_1_count(file1, file2, perf_match_file, experiment_name, sim_
 	ax.set_title(experiment_name)
 	ax.set_ylabel('Median Count')
 	ax.set_xlabel('Experiment Type')
-	label_list = ['Bipartite Matching', 'Naive Matching', 'Sample Matching']
+	label_list = ['Bipartite Matching', 'Naive Matching']
 	ax.bar(indices, maxThreshold, width=width, color='paleturquoise', label='Max Outcome', align='center')
 	for index, value in enumerate(maxThreshold):
 		ax.text(index, value, str(value))

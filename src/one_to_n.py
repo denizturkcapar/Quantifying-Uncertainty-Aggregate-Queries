@@ -235,9 +235,9 @@ def realdata_keycomp_treshold_updated_maximal_construct_graph(file_one, file_n, 
             comp_point_2 = key2.split("_")[0]
             dist = calc_max_weight(str(comp_point_1).lower(),str(comp_point_2).lower())
             i+=1
-            print("id1: ", id1, "key2", key2, "dist: ", dist)
-            # if i%100000 == 0:
-                # print(str(round(100*i/len(file_one)/len(file_n),2))+'% complete')
+            # print("id1: ", id1, "key2", key2, "dist: ", dist)
+            if i%100000 == 0:
+                print(str(round(100*i/len(file_one)/len(file_n),2))+'% complete')
             if dist <= treshold_decimal:
 
                 # print(comp_point_1, comp_point_2, dist)

@@ -37,11 +37,13 @@ def amazon_catalog():
     return Catalog('Matching/data/Amazon.csv')
 
 
-def eval_matching(matching):
-    f = open('Matching/google-amazon-data/Amzon_GoogleProducts_perfectMapping.csv', 'r', encoding = "ISO-8859-1")
+def eval_matching(matching, perf_match_file):
+    f = open(perf_match_file, 'r', encoding = "ISO-8859-1")
     reader = csv.reader(f, delimiter=',', quotechar='"')
     matches = set()
     proposed_matches = set()
+
+    # print("MATCHING INSIDE EVAL_MATCHING", matching)
 
     tp = set()
     fp = set()
@@ -64,6 +66,8 @@ def eval_matching(matching):
             fn.add(m)
     # print("TP: ", len(tp))
     # print("FP: ", len(fp))
+    print("MATCHING INSIDE EVAL_MATCHING", proposed_matches)
+    print("PERFECT MAPPING", matches)
 
     try:
         prec = len(tp)/(len(tp) + len(fp))
