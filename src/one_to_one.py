@@ -72,14 +72,14 @@ def convert_df(file):
         return df
 """
 
-Calculates maximum weight for the matching
+# Calculates maximum weight for the matching
 
-Input: keys from 2 tables
-Output: weight for each matching to be used in the weight part of constructing the graph
-"""
-def calc_max_weight(key1, key2):
-    weight = textdistance.jaccard(key1,key2) #this library's implementation is slower than jaccard_similarity()
-    return weight
+# Input: keys from 2 tables
+# Output: weight for each matching to be used in the weight part of constructing the graph
+# """
+# def calc_max_weight(key1, key2):
+#     weight = textdistance.jaccard(key1,key2) #this library's implementation is slower than jaccard_similarity()
+#     return weight
 
 """
 

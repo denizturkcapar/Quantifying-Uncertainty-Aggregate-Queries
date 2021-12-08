@@ -118,10 +118,10 @@ def realdata_matcher_updated(num_matches, is_max, d1, d2, distance_fn, sampler_f
 
 	# record id's after extract methods 
 	for (m1, m2, id1, id2, sim) in res:
-		print("id1: ", id1, "id2: ", id2)
+		# print("id1: ", id1, "id2: ", id2)
 		res_without_sum.append((id1, id2))
-	print("RES", res)
-	print("RES_WITHOUT_SUM", res_without_sum)
+	# print("RES", res)
+	# print("RES_WITHOUT_SUM", res_without_sum)
 
 	return res, res_without_sum
 

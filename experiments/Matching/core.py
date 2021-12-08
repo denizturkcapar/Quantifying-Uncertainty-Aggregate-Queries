@@ -66,8 +66,8 @@ def eval_matching(matching, perf_match_file):
             fn.add(m)
     # print("TP: ", len(tp))
     # print("FP: ", len(fp))
-    print("MATCHING INSIDE EVAL_MATCHING", proposed_matches)
-    print("PERFECT MAPPING", matches)
+    # print("MATCHING INSIDE EVAL_MATCHING", proposed_matches)
+    # print("PERFECT MAPPING", matches)
 
     try:
         prec = len(tp)/(len(tp) + len(fp))
