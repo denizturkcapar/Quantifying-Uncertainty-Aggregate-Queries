@@ -793,3 +793,88 @@ def show_experiment_4(file1, file2, experiment_name, user_n, is_age_skewed=False
 	plt.legend()
 	plt.savefig(experiment_name, dpi=300)
 	plt.show()
+
+"""
+
+Collapse the results further to a dictionary format. I've made it optional as a separate function for now.
+Although it is quite possible to merge this function with collapsed() function
+
+Input: (id_match1, id_match2) formatted list of tuples (either from bipartite or naive result)
+Output: A dictionary that has the key as the de-duplicated entries and the values as the "n" table values that they got matched
+"""
+def collapse_dict_for_evaluation(res):
+
+    out = collections.defaultdict(set)
+    for (key, val) in res:
+        # print("\n\n", val, key)
+        out[key].add(str(val))
+    return out
+
+def show_one_to_n_histogram_maxes(file1, file2, bp_sim, naive_sim, bp_n, naive_n):
+	"""
+	ONE_TO_N CALCULATIONS
+	"""
+	# Bipartite Max calc
+	proposed_matches = []
+	table_a_non_duplicated, table_b, tables_map, data1_map, data2_map, name_to_id_dict_1, name_to_id_dict_2 = data_to_df(file1, file2)
+	now = datetime.datetime.now()
+	bipartite_graph_result = one_to_n.realdata_keycomp_treshold_updated_maximal_construct_graph(table_a_non_duplicated, table_b, 'name', bp_sim, bp_n)
+	timing_tresh = (datetime.datetime.now()-now).total_seconds()
+	sum_weighted_graph = SUM_edit_edge_weight(bipartite_graph_result, data1_map, data2_map)
+	timing_match_maximal = (datetime.datetime.now()-now).total_seconds()
+	matching_set_maximal = nx.algorithms.matching.max_weight_matching(sum_weighted_graph)
+	print("The Matching Set is:", matching_set_maximal, "\n")
+	out_max = fetch_sum(sum_weighted_graph, matching_set_maximal)
+	formatted_proposed_matching = experiment_funcs.fix_form_bp(out_max)
+	for (m1,m2,w) in formatted_proposed_matching:
+		if m1 in name_to_id_dict_1:
+			id1 = name_to_id_dict_1[m1]
+			id2 = name_to_id_dict_2[m2]
+		else:
+			id1 = name_to_id_dict_2[m1]
+			id2 = name_to_id_dict_1[m2]
+		proposed_matches.append((id1,id2))
+	print("Proposed matches: ", proposed_matches)
+	bipartite_res_dict = collapse_dict_for_evaluation(proposed_matches)
+
+	# Naive Max calc
+	table_a_unprocessed = one_to_n.lat_convert_df(file1)
+	table_a_dup = one_to_n.create_duplicates(table_a_unprocessed, "name", naive_n)
+	table_a_dup.to_csv("table_a_dup_histogram", index = False, header=True)
+	cat_table1_dup = core.data_catalog("table_a_dup_histogram")
+	cat_table1 = core.data_catalog(file1)
+	cat_table2 = core.data_catalog(file2)
+	now = datetime.datetime.now()
+	print('Performing compare all match (jaccard distance)...')
+	now = datetime.datetime.now()
+	max_compare_all_jaccard_match, res_for_eval_max = matcher.realdata_matcher_updated(naive_n, True, cat_table1,cat_table2,one_to_n.calc_jaccard, matcher.all, naive_sim)
+	naive_time_jaccard_max = (datetime.datetime.now()-now).total_seconds()
+	print("Naive Jaccard Matching computation time taken: ", naive_time_jaccard_max, " seconds", "\n")
+	print(res_for_eval_max)
+
+	naive_res_dict = collapse_dict_for_evaluation(res_for_eval_max)
+	print("The de-duplicated final result is:", naive_res_dict, "\n")
+
+
+	"""
+	Find max n
+	"""
+
+	
+	"""
+	PLOTTING THE HISTOGRAM
+	"""
+
+
+
+def show_one_to_n_histogram_mins(file1, file2, bp_sim, naive_sim, bp_n, naive_n):
+	table_a_non_duplicated, table_b, tables_map, data1_map, data2_map, name_to_id_dict_1, name_to_id_dict_2 = data_to_df(file1, file2)
+
+	# Bipartite Matching Script
+	total_max, total_min, bip_min_matching_time, bip_max_matching_time, out_max, out_min = realdata_sum_bip_script(table_a_non_duplicated, table_b, "name", bp_sim, bp_n, data1_map, data2_map)
+
+	# Run Naive Matching Script
+	naive_total_max, naive_total_min, naive_min_matching_time, naive_max_matching_time, naive_max, naive_min, res_naive_eval_max, res_naive_eval_min = realdata_sum_naive_script(naive_sim, file1, file2, table_a_non_duplicated, naive_n, "naive_dup")
+
+show_one_to_n_histogram_maxes('../Background_Demonstration_Data/company_a_inventory.csv', '../Background_Demonstration_Data/company_b_inventory.csv', 0.8, 0.8, 5, 5)
+
