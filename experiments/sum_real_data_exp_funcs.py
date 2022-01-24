@@ -826,6 +826,7 @@ def show_one_to_n_histogram_maxes(file1, file2, title, bp_sim, naive_sim, bp_n, 
 	print("The Matching Set is:", matching_set_maximal, "\n")
 	out_max = fetch_sum(sum_weighted_graph, matching_set_maximal)
 	formatted_proposed_matching = experiment_funcs.fix_form_bp(out_max)
+	print("\n\n\n FORMATTED PROPOSED MATCHING: ", formatted_proposed_matching, "\n\n\n")
 	for (m1,m2,w) in formatted_proposed_matching:
 		if m1 in name_to_id_dict_1:
 			id1 = name_to_id_dict_1[m1]
@@ -937,4 +938,70 @@ def show_one_to_n_histogram_maxes(file1, file2, title, bp_sim, naive_sim, bp_n, 
 
 	plt.savefig("histogram_trial1", dpi=300)
 	plt.show()
+
+def show_sim_metric_distribution_maxes(file1, file2, title, bp_sim, naive_sim, bp_n, naive_n):
+	naive_sim_outcomes = []
+	bipartite_sim_outcomes = []
+
+	# Bipartite Max calc
+	table_a_non_duplicated, table_b, tables_map, data1_map, data2_map, name_to_id_dict_1, name_to_id_dict_2 = data_to_df(file1, file2)
+	now = datetime.datetime.now()
+	bipartite_graph_result = one_to_n.realdata_keycomp_treshold_updated_maximal_construct_graph(table_a_non_duplicated, table_b, 'name', bp_sim, bp_n)
+	timing_tresh = (datetime.datetime.now()-now).total_seconds()
+	sum_weighted_graph = SUM_edit_edge_weight(bipartite_graph_result, data1_map, data2_map)
+	timing_match_maximal = (datetime.datetime.now()-now).total_seconds()
+	matching_set_maximal = nx.algorithms.matching.max_weight_matching(sum_weighted_graph)
+	print("The Matching Set is:", matching_set_maximal, "\n")
+	out_max = fetch_sum(sum_weighted_graph, matching_set_maximal)
+	formatted_proposed_matching = experiment_funcs.fix_form_bp(out_max)
+	# for (m1,m2,w) in formatted_proposed_matching:
+	# 	if m1 in name_to_id_dict_1:
+	# 		id1 = name_to_id_dict_1[m1]
+	# 		id2 = name_to_id_dict_2[m2]
+	# 	else:
+	# 		id1 = name_to_id_dict_2[m1]
+	# 		id2 = name_to_id_dict_1[m2]
+	# 	proposed_matches.append((id1,id2))
+	# print("Proposed matches: ", proposed_matches)
+	# bipartite_res_dict = collapse_dict_for_evaluation(proposed_matches)
+
+	# (match1, match2, sim)
+
+	# Naive Max calc
+	table_a_unprocessed = one_to_n.lat_convert_df(file1)
+	table_a_dup = one_to_n.create_duplicates(table_a_unprocessed, "name", naive_n)
+	table_a_dup.to_csv("table_a_dup_histogram", index = False, header=True)
+	cat_table1_dup = core.data_catalog("table_a_dup_histogram")
+	cat_table1 = core.data_catalog(file1)
+	cat_table2 = core.data_catalog(file2)
+	now = datetime.datetime.now()
+	print('Performing compare all match (jaccard distance)...')
+	now = datetime.datetime.now()
+	max_compare_all_jaccard_match, res_for_eval_max = matcher.realdata_matcher_updated(naive_n, True, cat_table1,cat_table2,one_to_n.calc_jaccard, matcher.all, naive_sim)
+	naive_time_jaccard_max = (datetime.datetime.now()-now).total_seconds()
+	# print("\n\n\n", max_compare_all_jaccard_match)
+
+
+	"""
+	Compile an array of similarity values for bipartite and naive outcomes.
+	"""
+
+	for (m1,m2,w) in formatted_proposed_matching:
+		dist = one_to_n.calc_max_weight(str(m1).lower(),str(m2).lower())
+		bipartite_sim_outcomes.append(dist)
+
+
+	for (m1,m2,ind1,ind2,outcome) in max_compare_all_jaccard_match:
+		dist = one_to_n.calc_max_weight(str(m1).lower(),str(m2).lower())
+		naive_sim_outcomes.append(dist)
+	# print(bipartite_sim_outcomes)
+	# print(naive_sim_outcomes)
+
+	"""
+	Plot Bipartite and Naive outcomes in 2 separate histograms. 
+	"""
+
+
+
+show_sim_metric_distribution_maxes('../Background_Demonstration_Data/company_a_inventory.csv', '../Background_Demonstration_Data/company_b_inventory.csv', 'Histogram of 1-N Match Counts',0.8, 0.8, 5, 5)
 
