@@ -7,6 +7,7 @@ import datetime
 import matplotlib.transforms as transforms
 # import matplotlib.axes.Axes as ax
 import matplotlib.pyplot as plt
+import matplotlib as mpl
 import numpy as np
 import networkx as nx
 import experiment_funcs
@@ -927,7 +928,7 @@ def show_one_to_n_histogram_maxes(file1, file2, title, bp_sim, naive_sim, bp_n, 
 	ax.set_xlabel('N Matches')
 	label_list = ['1-1', '1-2', '1-3', '1-4', '1-5']
 	ax.bar(indices, bipartiteThreshold, width=width, color='paleturquoise', label='Bipartite Outcome', align='center')
-	ax.bar([i for i in indices], naiveThreshold, width=width/2, color='red', alpha=0.5, label='Naive Outcome', align='center')
+	ax.bar([i for i in indices], naiveThreshold, width=width/2, color='red', alpha=0.5, label='PC Outcome', align='center')
 	# for index, value in enumerate(bipartiteThreshold):
 	# 	ax.text(index, value, str(value))
 	# for index, value in enumerate(naiveThreshold):
@@ -951,7 +952,7 @@ def show_sim_metric_distribution_maxes(file1, file2, title, bp_sim, naive_sim, b
 	sum_weighted_graph = SUM_edit_edge_weight(bipartite_graph_result, data1_map, data2_map)
 	timing_match_maximal = (datetime.datetime.now()-now).total_seconds()
 	matching_set_maximal = nx.algorithms.matching.max_weight_matching(sum_weighted_graph)
-	print("The Matching Set is:", matching_set_maximal, "\n")
+	# print("The Matching Set is:", matching_set_maximal, "\n")
 	out_max = fetch_sum(sum_weighted_graph, matching_set_maximal)
 	formatted_proposed_matching = experiment_funcs.fix_form_bp(out_max)
 	# for (m1,m2,w) in formatted_proposed_matching:
@@ -994,14 +995,23 @@ def show_sim_metric_distribution_maxes(file1, file2, title, bp_sim, naive_sim, b
 	for (m1,m2,ind1,ind2,outcome) in max_compare_all_jaccard_match:
 		dist = one_to_n.calc_max_weight(str(m1).lower(),str(m2).lower())
 		naive_sim_outcomes.append(dist)
-	# print(bipartite_sim_outcomes)
-	# print(naive_sim_outcomes)
+	print(bipartite_sim_outcomes)
+	print(naive_sim_outcomes)
 
 	"""
 	Plot Bipartite and Naive outcomes in 2 separate histograms. 
 	"""
+	mpl.use('tkagg')
+	plt.figure(figsize=(8,6))
+	plt.hist(bipartite_sim_outcomes, bins=100, alpha=0.8, color='green', label="Bipartite Matching Outcome")
+	plt.hist(naive_sim_outcomes, bins=100, alpha=0.5, color='red', label="PC Matching Outcome")
 
+	plt.xlabel("Distribution of Similarity Distances", size=14)
+	plt.ylabel("Count", size=14)
+	plt.title(title)
+	plt.legend(loc='upper right')
+	plt.savefig("sim_distribution_trial1.png")
+	plt.show()
 
-
-show_sim_metric_distribution_maxes('../Background_Demonstration_Data/company_a_inventory.csv', '../Background_Demonstration_Data/company_b_inventory.csv', 'Histogram of 1-N Match Counts',0.8, 0.8, 5, 5)
+# show_sim_metric_distribution_maxes('../Background_Demonstration_Data/company_a_inventory.csv', '../Background_Demonstration_Data/company_b_inventory.csv', 'Distribution of Similarity Distances', 0.8, 0.8, 5, 5)
 
