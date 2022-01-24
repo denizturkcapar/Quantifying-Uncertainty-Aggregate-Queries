@@ -810,7 +810,7 @@ def collapse_dict_for_evaluation(res):
         out[key].add(str(val))
     return out
 
-def show_one_to_n_histogram_maxes(file1, file2, bp_sim, naive_sim, bp_n, naive_n):
+def show_one_to_n_histogram_maxes(file1, file2, title, bp_sim, naive_sim, bp_n, naive_n):
 	"""
 	ONE_TO_N CALCULATIONS
 	"""
@@ -859,22 +859,82 @@ def show_one_to_n_histogram_maxes(file1, file2, bp_sim, naive_sim, bp_n, naive_n
 	"""
 	Find max n
 	"""
+	# max_n = 0
+	# for key,vals in naive_res_dict.items():
+	# 	if len(vals) > max_n:
+	# 		max_n = len(vals)
 
-	
+	# for key,vals in bipartite_res_dict.items():
+	# 	if len(vals) > max_n:
+	# 		max_n = len(vals)
+
+	# Hardcode max_n for now so that computation time is less.
+
+	"""
+	Find values for Histogram (1-1: # of matches, 1-2: # of matches, ..., 1-max_n: # of matches)
+	"""
+	count1, count2, count3, count4, count5 = 0,0,0,0,0
+	for key, vals in bipartite_res_dict.items():
+		if len(vals) == 1:
+			count1 +=1
+		if len(vals) == 2:
+			count2 +=1
+		if len(vals) == 3:
+			count3 +=1
+		if len(vals) == 4:
+			count4 +=1
+		if len(vals) == 5:
+			count5 +=1
+
+	bipartite_value_correlation = {'1-1': count1, '1-2': count2,'1-3': count3, '1-4': count4, '1-5': count5}
+
+
+	count1, count2, count3, count4, count5 = 0,0,0,0,0
+
+	for key, vals in naive_res_dict.items():
+		if len(vals) == 1:
+			count1 +=1
+		if len(vals) == 2:
+			count2 +=1
+		if len(vals) == 3:
+			count3 +=1
+		if len(vals) == 4:
+			count4 +=1
+		if len(vals) == 5:
+			count5 +=1
+
+	naive_value_correlation = {'1-1': count1, '1-2': count2,'1-3': count3, '1-4': count4, '1-5': count5}
+
 	"""
 	PLOTTING THE HISTOGRAM
 	"""
 
+	bipartiteThreshold = [bipartite_value_correlation['1-1'], bipartite_value_correlation['1-2'],bipartite_value_correlation['1-3'],bipartite_value_correlation['1-4'],bipartite_value_correlation['1-5']]
+	naiveThreshold = [naive_value_correlation['1-1'], naive_value_correlation['1-2'],naive_value_correlation['1-3'],naive_value_correlation['1-4'],naive_value_correlation['1-5']]
+	indices = np.arange(len(bipartiteThreshold))
+	
+	width = 0.8
 
+	fig = plt.figure()
 
-def show_one_to_n_histogram_mins(file1, file2, bp_sim, naive_sim, bp_n, naive_n):
-	table_a_non_duplicated, table_b, tables_map, data1_map, data2_map, name_to_id_dict_1, name_to_id_dict_2 = data_to_df(file1, file2)
+	ax = fig.add_subplot(111)
 
-	# Bipartite Matching Script
-	total_max, total_min, bip_min_matching_time, bip_max_matching_time, out_max, out_min = realdata_sum_bip_script(table_a_non_duplicated, table_b, "name", bp_sim, bp_n, data1_map, data2_map)
+	max_limit = max(max(bipartiteThreshold), max(naiveThreshold))
 
-	# Run Naive Matching Script
-	naive_total_max, naive_total_min, naive_min_matching_time, naive_max_matching_time, naive_max, naive_min, res_naive_eval_max, res_naive_eval_min = realdata_sum_naive_script(naive_sim, file1, file2, table_a_non_duplicated, naive_n, "naive_dup")
+	ax.set_title(title)
+	ax.set_ylabel('Count of Matches')
+	ax.set_xlabel('N Matches')
+	label_list = ['1-1', '1-2', '1-3', '1-4', '1-5']
+	ax.bar(indices, bipartiteThreshold, width=width, color='paleturquoise', label='Bipartite Outcome', align='center')
+	ax.bar([i for i in indices], naiveThreshold, width=width/2, color='red', alpha=0.5, label='Naive Outcome', align='center')
+	# for index, value in enumerate(bipartiteThreshold):
+	# 	ax.text(index, value, str(value))
+	# for index, value in enumerate(naiveThreshold):
+	# 	ax.text(index, value, str(value))
+	ax.legend(loc=9, bbox_to_anchor=(0.5,-0.2))
+	ax.set_xticks(indices, minor=False)
+	ax.set_xticklabels(label_list, fontdict=None, minor=False)
 
-show_one_to_n_histogram_maxes('../Background_Demonstration_Data/company_a_inventory.csv', '../Background_Demonstration_Data/company_b_inventory.csv', 0.8, 0.8, 5, 5)
+	plt.savefig("histogram_trial1", dpi=300)
+	plt.show()
 
