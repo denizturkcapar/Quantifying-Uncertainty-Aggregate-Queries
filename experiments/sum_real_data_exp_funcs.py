@@ -1027,7 +1027,8 @@ def show_candidate_nmatches_histogram(file1, file2, title, sim):
 	now = datetime.datetime.now()
 	match_map = matcher.realdata_matcher_for_n_histogram(cat_table1,cat_table2,one_to_n.calc_jaccard, matcher.all, sim)
 	naive_time_jaccard_max = (datetime.datetime.now()-now).total_seconds()
-	print("\n\n\n", match_map)
+	# print("\n\n\n", match_map)
+	print("\n\n\n Jaccard Matching Done! ")
 	match_count = 0
 	stored_counts = []
 	for key, vals in match_map.items():
@@ -1038,14 +1039,13 @@ def show_candidate_nmatches_histogram(file1, file2, title, sim):
 	PLOTTING THE HISTOGRAM
 	"""
 
-	mpl.use('tkagg')
+	# mpl.use('tkagg')
 	plt.figure(figsize=(8,6))
 	plt.hist(stored_counts, bins=100, alpha=0.8, color='green')
 
 	plt.xlabel("Number of Candidate Matches (N) ", size=14)
 	plt.ylabel("Count", size=14)
 	plt.title(title)
-	plt.legend(loc='upper right')
 	plt.savefig("all_n_candidate_matches_dist.png")
 	plt.show()
 
@@ -1060,31 +1060,31 @@ def show_candidate_avg_sim_metric_distribution(file1, file2, title, sim):
 	now = datetime.datetime.now()
 	match_map = matcher.realdata_matcher_for_simdist_histogram(cat_table1,cat_table2,one_to_n.calc_jaccard, matcher.all, sim)
 	naive_time_jaccard_max = (datetime.datetime.now()-now).total_seconds()
-	print("\n\n\n", match_map)
+	# print("\n\n\n", match_map)
+	print("\n\n\n Jaccard Matching Done! ")
 	candidate_sim_dists = []
 	stored_dists = []
 	for key, vals in match_map.items():
 		for val in vals:
 			candidate_sim_dists.append(float(val[-1]))
 		avg_sim = np.mean(candidate_sim_dists)
-		stored_dists.append(avg_sim)
+		stored_dists.append(round(avg_sim, 2))
 		candidate_sim_dists = []
 
 	"""
 	PLOTTING THE HISTOGRAM
 	"""
-	print(stored_dists)
-	mpl.use('tkagg')
+	# print(stored_dists)
+	# mpl.use('tkagg')
 	plt.figure(figsize=(8,6))
 	plt.hist(stored_dists, bins=100, alpha=0.8, color='red')
 
-	plt.xlabel("Average Similarity Distance for Candidate Matches", size=14)
+	plt.xlabel("Average Similarity Distance for All Candidate Matches", size=14)
 	plt.ylabel("Count", size=14)
 	plt.title(title)
-	plt.legend(loc='upper right')
 	plt.savefig("candidate_avg_sim_dist_hist.png")
 	plt.show()
 
 # show_candidate_nmatches_histogram('../Background_Demonstration_Data/company_a_inventory.csv', '../Background_Demonstration_Data/company_b_inventory.csv', 'Distribution of All Number of Candidate Matches', 0.8)
 
-show_candidate_avg_sim_metric_distribution('../Background_Demonstration_Data/company_a_inventory.csv', '../Background_Demonstration_Data/company_b_inventory.csv', 'Distribution of Average Similarity Distance for Candidate Matches', 0.8)
+# show_candidate_avg_sim_metric_distribution('../Background_Demonstration_Data/company_a_inventory.csv', '../Background_Demonstration_Data/company_b_inventory.csv', 'Distribution of Average Similarity Distance for Candidate Matches', 0.8)
