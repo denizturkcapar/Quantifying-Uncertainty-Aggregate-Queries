@@ -293,3 +293,66 @@ def matching_with_random_swaps(num_swaps, num_matches, is_max, d1, d2, distance_
 	else:
 		res = extract_bottom_1(match_map)
 	return res
+
+
+def realdata_matcher_for_n_histogram(d1, d2, distance_fn, sampler_fn, required_distance, sample_size=100):
+	res_without_sum = []
+	# match = []
+	match_map = defaultdict(list)
+	# print("DF1: ", d1)
+	# print("DF2 ", d2)
+	trim = re.compile(r'[^\d.,]+')
+	for e1 in d1:
+
+		for e2 in sampler_fn(d2, sample_size):
+			# print("M1: ", e1['name'], "M2: ", e2['name'])
+			distance = calc_max_weight_jaccard(str(e1['name']).lower(), str(e2['name']).lower(), distance_fn)
+			# print("M1: ", e1['name'], "M2: ", e2['name'],"DIST: ", distance, "REQ:", required_distance)
+			# if distance != 0:
+			# 	print("M1: ", e1['name'], "M2: ", e2['name'], "DIST: ", distance)
+			if distance <= required_distance:
+				val1 = trim.sub('', e1['price'])
+				val2 = trim.sub('', e2['price'])
+				# val1 = re.sub("[^0-9]", "", e1['price'])
+				# val2 =re.sub("[^0-9]", "", e2['price'])
+				# print("M1: ", e1['name'], "M2: ", e2['name'], e1['price'], e2['price'], "val1", val1, "val2", val2,"DIST: ", distance)
+				sum_total = float(val1) + float(val2)
+				match_map[e1['name']].append((e1['name'],e2['name'], e1['id'], e2['id'], sum_total))
+				# match.append((e1['name'],e2['name'], sum_total))
+
+	for k,v in match_map.items():
+		match_map[k] = sorted(v,key=lambda x: x[-1], reverse=True)
+
+
+	return match_map
+
+def realdata_matcher_for_simdist_histogram(d1, d2, distance_fn, sampler_fn, required_distance, sample_size=100):
+	res_without_sum = []
+	# match = []
+	match_map = defaultdict(list)
+	# print("DF1: ", d1)
+	# print("DF2 ", d2)
+	trim = re.compile(r'[^\d.,]+')
+	for e1 in d1:
+
+		for e2 in sampler_fn(d2, sample_size):
+			# print("M1: ", e1['name'], "M2: ", e2['name'])
+			distance = calc_max_weight_jaccard(str(e1['name']).lower(), str(e2['name']).lower(), distance_fn)
+			# print("M1: ", e1['name'], "M2: ", e2['name'],"DIST: ", distance, "REQ:", required_distance)
+			# if distance != 0:
+			# 	print("M1: ", e1['name'], "M2: ", e2['name'], "DIST: ", distance)
+			if distance <= required_distance:
+				val1 = trim.sub('', e1['price'])
+				val2 = trim.sub('', e2['price'])
+				# val1 = re.sub("[^0-9]", "", e1['price'])
+				# val2 =re.sub("[^0-9]", "", e2['price'])
+				# print("M1: ", e1['name'], "M2: ", e2['name'], e1['price'], e2['price'], "val1", val1, "val2", val2,"DIST: ", distance)
+				sum_total = float(val1) + float(val2)
+				match_map[e1['name']].append((e1['name'],e2['name'], e1['id'], e2['id'], sum_total, distance))
+				# match.append((e1['name'],e2['name'], sum_total))
+
+	for k,v in match_map.items():
+		match_map[k] = sorted(v,key=lambda x: x[-1], reverse=True)
+
+
+	return match_map

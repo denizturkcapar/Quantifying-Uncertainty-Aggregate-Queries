@@ -212,7 +212,7 @@ The bipartite matching graph only includes those that have passed a certain simi
 The similarity metric takes into account the **keys** in this implementation
 
 Input: Any 2 files in any format
-Output: A Bipartite Graph with Maximal Weights
+Output: A Bipartite Graph with similarity distance values in each edge weight
 """
 def realdata_keycomp_treshold_updated_maximal_construct_graph(file_one, file_n, col_to_dup, treshold_decimal, n_matches):
     table_a_unprocessed = convert_df(file_one)
@@ -251,6 +251,7 @@ def realdata_keycomp_treshold_updated_maximal_construct_graph(file_one, file_n, 
                 continue
             
     return bipartite_graph
+
 
 """
 

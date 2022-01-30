@@ -924,9 +924,9 @@ def show_one_to_n_histogram_maxes(file1, file2, title, bp_sim, naive_sim, bp_n, 
 	max_limit = max(max(bipartiteThreshold), max(naiveThreshold))
 
 	ax.set_title(title)
-	ax.set_ylabel('Count of Matches')
-	ax.set_xlabel('N Matches')
-	label_list = ['1-1', '1-2', '1-3', '1-4', '1-5']
+	ax.set_ylabel('Frequency of Matches')
+	ax.set_xlabel('Number of Matches when Max_n = 5')
+	label_list = ['1', '2', '3', '4', '5']
 	ax.bar(indices, bipartiteThreshold, width=width, color='paleturquoise', label='Bipartite Outcome', align='center')
 	ax.bar([i for i in indices], naiveThreshold, width=width/2, color='red', alpha=0.5, label='PC Outcome', align='center')
 	# for index, value in enumerate(bipartiteThreshold):
@@ -1015,3 +1015,76 @@ def show_sim_metric_distribution_maxes(file1, file2, title, bp_sim, naive_sim, b
 
 # show_sim_metric_distribution_maxes('../Background_Demonstration_Data/company_a_inventory.csv', '../Background_Demonstration_Data/company_b_inventory.csv', 'Distribution of Similarity Distances', 0.8, 0.8, 5, 5)
 
+
+def show_candidate_nmatches_histogram(file1, file2, title, sim):
+	"""
+	ONE_TO_N CALCULATIONS
+	"""
+	cat_table1 = core.data_catalog(file1)
+	cat_table2 = core.data_catalog(file2)
+	now = datetime.datetime.now()
+	print('Performing compare all match (jaccard distance)...')
+	now = datetime.datetime.now()
+	match_map = matcher.realdata_matcher_for_n_histogram(cat_table1,cat_table2,one_to_n.calc_jaccard, matcher.all, sim)
+	naive_time_jaccard_max = (datetime.datetime.now()-now).total_seconds()
+	print("\n\n\n", match_map)
+	match_count = 0
+	stored_counts = []
+	for key, vals in match_map.items():
+		match_count = len(vals)
+		stored_counts.append(match_count)
+
+	"""
+	PLOTTING THE HISTOGRAM
+	"""
+
+	mpl.use('tkagg')
+	plt.figure(figsize=(8,6))
+	plt.hist(stored_counts, bins=100, alpha=0.8, color='green')
+
+	plt.xlabel("Number of Candidate Matches (N) ", size=14)
+	plt.ylabel("Count", size=14)
+	plt.title(title)
+	plt.legend(loc='upper right')
+	plt.savefig("all_n_candidate_matches_dist.png")
+	plt.show()
+
+def show_candidate_avg_sim_metric_distribution(file1, file2, title, sim):
+	"""
+	ONE_TO_N CALCULATIONS
+	"""
+	cat_table1 = core.data_catalog(file1)
+	cat_table2 = core.data_catalog(file2)
+	now = datetime.datetime.now()
+	print('Performing compare all match (jaccard distance)...')
+	now = datetime.datetime.now()
+	match_map = matcher.realdata_matcher_for_simdist_histogram(cat_table1,cat_table2,one_to_n.calc_jaccard, matcher.all, sim)
+	naive_time_jaccard_max = (datetime.datetime.now()-now).total_seconds()
+	print("\n\n\n", match_map)
+	candidate_sim_dists = []
+	stored_dists = []
+	for key, vals in match_map.items():
+		for val in vals:
+			candidate_sim_dists.append(float(val[-1]))
+		avg_sim = np.mean(candidate_sim_dists)
+		stored_dists.append(avg_sim)
+		candidate_sim_dists = []
+
+	"""
+	PLOTTING THE HISTOGRAM
+	"""
+	print(stored_dists)
+	mpl.use('tkagg')
+	plt.figure(figsize=(8,6))
+	plt.hist(stored_dists, bins=100, alpha=0.8, color='red')
+
+	plt.xlabel("Average Similarity Distance for Candidate Matches", size=14)
+	plt.ylabel("Count", size=14)
+	plt.title(title)
+	plt.legend(loc='upper right')
+	plt.savefig("candidate_avg_sim_dist_hist.png")
+	plt.show()
+
+# show_candidate_nmatches_histogram('../Background_Demonstration_Data/company_a_inventory.csv', '../Background_Demonstration_Data/company_b_inventory.csv', 'Distribution of All Number of Candidate Matches', 0.8)
+
+show_candidate_avg_sim_metric_distribution('../Background_Demonstration_Data/company_a_inventory.csv', '../Background_Demonstration_Data/company_b_inventory.csv', 'Distribution of Average Similarity Distance for Candidate Matches', 0.8)
