@@ -7,6 +7,7 @@ import datetime
 import matplotlib.transforms as transforms
 # import matplotlib.axes.Axes as ax
 import matplotlib.pyplot as plt
+plt.style.use('fivethirtyeight')
 import matplotlib as mpl
 import numpy as np
 import networkx as nx
@@ -633,7 +634,7 @@ def show_experiment_1_sum(file1, file2, perf_match_file, experiment_name, sim_th
 	ax.set_title(experiment_name)
 	ax.set_ylabel('Median Sum')
 	ax.set_xlabel('Experiment Type')
-	label_list = ['Bipartite Matching', 'Naive Matching']
+	label_list = ['Bipartite Matching', 'PC Matching']
 	ax.bar(indices, maxThreshold, width=width, color='paleturquoise', label='Max Outcome', align='center')
 	for index, value in enumerate(maxThreshold):
 		ax.text(index, value, str(value))
@@ -1035,14 +1036,17 @@ def show_candidate_nmatches_histogram(file1, file2, title, sim):
 		match_count = len(vals)
 		stored_counts.append(match_count)
 
+	# df = pd.DataFrame(stored_counts)
+	# df.to_csv('candidate_nmatches_distribution.csv')
+	np.savetxt('candidate_nmatches_distribution.csv', stored_counts, delimiter=',')
 	"""
 	PLOTTING THE HISTOGRAM
 	"""
 
 	# mpl.use('tkagg')
-	plt.figure(figsize=(8,6))
+	plt.figure(figsize=(9,7))
 	plt.hist(stored_counts, bins=100, alpha=0.8, color='green')
-
+	plt.yscale("log")
 	plt.xlabel("Number of Candidate Matches (N) ", size=14)
 	plt.ylabel("Count", size=14)
 	plt.title(title)
@@ -1070,13 +1074,17 @@ def show_candidate_avg_sim_metric_distribution(file1, file2, title, sim):
 		avg_sim = np.mean(candidate_sim_dists)
 		stored_dists.append(round(avg_sim, 2))
 		candidate_sim_dists = []
+	
+	# df = pd.DataFrame(stored_dists)
+	# df.to_csv('candidate_avg_sim_metric_distribution.csv')
+	np.savetxt('candidate_avg_sim_metric_distribution.csv', stored_dists, delimiter=',')
 
 	"""
 	PLOTTING THE HISTOGRAM
 	"""
 	# print(stored_dists)
 	# mpl.use('tkagg')
-	plt.figure(figsize=(8,6))
+	plt.figure(figsize=(9,7))
 	plt.hist(stored_dists, bins=100, alpha=0.8, color='red')
 
 	plt.xlabel("Average Similarity Distance for All Candidate Matches", size=14)

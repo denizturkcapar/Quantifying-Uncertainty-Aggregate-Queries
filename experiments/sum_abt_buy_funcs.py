@@ -20,35 +20,50 @@ import textdistance
 import editdistance
 import collections
 
-def accuracy_eval(formatted_proposed_matching, perfect_mapping):
+def accuracy_eval(formatted_proposed_matching, perfect_mapping, joined_table, name_to_id_dict_1, name_to_id_dict_2, perf_match_file):
 	matches = set()
 	proposed_matches = set()
-
 	tp = set()
 	fp = set()
 	fn = set()
 	tn = set()
 
-	# print("FORMATTED PROPOSED MATCHING: ", formatted_proposed_matching)
+	f = open(perf_match_file, 'r', encoding = "ISO-8859-1")
+	reader = csv.reader(f, delimiter=',', quotechar='"')
 
-	for abt_key,buy_val in perfect_mapping.items():
-		matches.add((abt_key,buy_val))
+	for row in reader:
+		matches.add((row[0],row[1]))
+
+	# print("PERFECT MAPPING: ", perfect_mapping)
+	for key,vals in perfect_mapping.items():
+		# print("KEY: ", key,"\n","vals: ", vals)
+		matches.add((key,vals))
 
 	for (m1,m2,w) in formatted_proposed_matching:
-		proposed_matches.add((m1,m2))
-
-		if (m1,m2) in matches:
-			tp.add((m1,m2))
+		if m1 in name_to_id_dict_1:
+			id1 = name_to_id_dict_1[m1]
+			id2 = name_to_id_dict_2[m2]
 		else:
-			fp.add((m1,m2))
+			id1 = name_to_id_dict_2[m1]
+			id2 = name_to_id_dict_1[m2]
+		# print("id1 :", id1)
+		# print("id2: ", id2)
+		proposed_matches.add((id1,id2))
+		if (id1,id2) in matches:
+			tp.add((id1,id2))
+		else:
+			fp.add((id1,id2))
 
 	for m in matches:
 		if m not in proposed_matches:
-			fn.add((m1,m2))
+			fn.add((id1,id2))
 
-	print("fn", len(fn))
-	print("tp", len(tp))
-	print("fp", len(fp))
+	# print("fn", len(fn))
+	# print("tp", len(tp))
+	# print("fp", len(fp))
+
+	# print("PERFECT MATCHES: ", matches)
+	# print("BIP MATCH CANDIDATES: ", proposed_matches)
 
 	try:
 		prec = len(tp)/(len(tp) + len(fp))
@@ -71,7 +86,7 @@ def accuracy_eval(formatted_proposed_matching, perfect_mapping):
 	except ZeroDivisionError:
 		accuracy = 0
 
-	print(accuracy)
+	# print(accuracy)
 	return false_pos, false_neg, accuracy
 
 def find_max_n_amazon(file1):
@@ -123,22 +138,22 @@ def data_to_df(file1, file2):
 	data1_map = {}
 	data2_map = {}
 
-	for (col1,col2,col3,col4,col5) in result_1:
-		data1_map[col2] = col5
+	for (col1,col2,col3,col4) in result_1:
+		data1_map[col2] = col4
 
-	for (col1,col2,col3,col4,col5) in result_2:
-		data2_map[col2] = col5
+	for (col1,col2,col3,col4) in result_2:
+		data2_map[col2] = col4
 
-	for (col1,col2,col3,col4,col5) in joined_list:
-		tables_map[col2] = col5
+	for (col1,col2,col3,col4) in joined_list:
+		tables_map[col2] = col4
 
 	name_to_id_dict_1 = {}
 	name_to_id_dict_2 = {}
 
-	for (col1,col2,col3,col4,col5) in result_1:
+	for (col1,col2,col3,col4) in result_1:
 		name_to_id_dict_1[col2] = col1
 
-	for (col1,col2,col3,col4,col5) in result_2:
+	for (col1,col2,col3,col4) in result_2:
 		name_to_id_dict_2[col2] = col1
 
 	# print("TABLES MAP", tables_map, '\n\n')
@@ -186,6 +201,8 @@ def create_perfect_mapping(perf_matching_file, file1_amazon, file2_google):
 
 	perf_match_dict = {}
 
+	name_to_id_dict = collections.defaultdict(list)
+
 	for val1,val2 in result_perfmatch:
 		perf_match_dict[val1] = val2
 
@@ -206,14 +223,19 @@ def create_perfect_mapping(perf_matching_file, file1_amazon, file2_google):
 	for col1,col2,col3,col4 in joined_list:
 		joined_table[col1].append((col2,col3,col4))
 
-	# print("PERF MATCHING DICT: ", perf_match_dict)
+	for col1,col2,col3,col4 in joined_list:
+		name_to_id_dict[col2].append(col1)
 
-	return result_perfmatch, joined_table, perf_match_dict
+
+	# print("PERF MATCHING DICT: ", perf_match_dict)
+	# print("JOINED TABLE", joined_table)
+
+	return result_perfmatch, joined_table, perf_match_dict, name_to_id_dict
 
 def find_perfect_sum_result(perf_matching_file, file1_amazon, file2_google):
 	res_sum = 0
 
-	result_perfmatch, joined_table, perf_match_dict = create_perfect_mapping(perf_matching_file, file1_amazon, file2_google)
+	result_perfmatch, joined_table, perf_match_dict, name_to_id_dict = create_perfect_mapping(perf_matching_file, file1_amazon, file2_google)
 	match_count = 0
 	for i in result_perfmatch:
 		if i[0] and i[1] in joined_table:
@@ -307,26 +329,26 @@ def sum_total_weights(max_min_list):
 		total += i[-1]
 	return total
 
-def realdata_sum_bip_script(table_a_non_duplicated, table_b, column_name, similarity_threshold, n_matches, tables_map, data1_map, data2_map, num_swaps=None):
-
+def realdata_sum_bip_script(table_a_non_duplicated, table_b, column_name, similarity_threshold, n_matches, data1_map, data2_map, num_swaps=None):
 	now = datetime.datetime.now()
 	bipartite_graph_result = one_to_n.realdata_keycomp_treshold_updated_maximal_construct_graph(table_a_non_duplicated, table_b, column_name, similarity_threshold, n_matches)
 	timing_tresh = (datetime.datetime.now()-now).total_seconds()
 	# print("---- Timing for Graph Construction with Treshold Constraint ----")
 	# print(timing_tresh,"seconds")
+	# print(bipartite_graph_result.edges())
 
 	if num_swaps != None:
 		bipartite_graph_result = one_to_n.randomize_by_edge_swaps(bipartite_graph_result, num_swaps)
 		sum_weighted_graph = SUM_edit_edge_weight(bipartite_graph_result, data1_map, data2_map)	
 	else:
 		sum_weighted_graph = SUM_edit_edge_weight(bipartite_graph_result, data1_map, data2_map)
-	# print(bipartite_graph_result.edges(data=True))
-	print(bipartite_graph_result.number_of_edges())
+	# print("BIPARTITE GRAPH RES: ", bipartite_graph_result.edges(data=True))
+	# print("BIPARTITE GRAPH RES: ", bipartite_graph_result.number_of_edges())
 	# print("\n\n 'SUM' MAXIMAL MATCHING:")
 	now = datetime.datetime.now()
 	matching_set_maximal = nx.algorithms.matching.max_weight_matching(sum_weighted_graph)
 	timing_match_maximal = (datetime.datetime.now()-now).total_seconds()
-
+	# print("MATCHED BIP RESULT: ", matching_set_maximal)
 	now = datetime.datetime.now()
 	min_bipartite_graph_result = one_to_n.realdata_keycomp_treshold_updated_maximal_construct_graph(table_a_non_duplicated, table_b, column_name, similarity_threshold, n_matches)
 	min_timing_tresh = (datetime.datetime.now()-now).total_seconds()
@@ -586,12 +608,12 @@ def exp1_helper(results_file):
 
 	return bp_min_med, bp_max_med, naive_min_med, naive_max_med, perf_threshold
 def show_experiment_1_sum(file1, file2, perf_match_file, experiment_name, sim_thresh, true_n, max_n):
-	real_data_1_to_n_sum_results(file1, file2, perf_match_file,"realdata_exp1_n1", sim_thresh,sim_thresh,sim_thresh,true_n,max_n,max_n,max_n,100, 100)
+	real_data_1_to_n_sum_results(file1, file2, perf_match_file,"realdata_exp1_n1", sim_thresh,sim_thresh,true_n,max_n,max_n,100)
 	# n = 1
-	bp_min_med, bp_max_med, naive_min_med, naive_max_med, sampled_min_med, sampled_max_med, perf_threshold = exp1_helper("realdata_exp1_n1.csv")
-	minThreshold = [bp_min_med, naive_min_med, sampled_min_med]
+	bp_min_med, bp_max_med, naive_min_med, naive_max_med, perf_threshold = exp1_helper("realdata_exp1_n1.csv")
+	minThreshold = [bp_min_med, naive_min_med]
 
-	maxThreshold = [bp_max_med, naive_max_med, sampled_max_med]
+	maxThreshold = [bp_max_med, naive_max_med]
 
 	indices = np.arange(len(maxThreshold))
 	
@@ -610,7 +632,7 @@ def show_experiment_1_sum(file1, file2, perf_match_file, experiment_name, sim_th
 	ax.bar(indices, maxThreshold, width=width, color='paleturquoise', label='Max Outcome', align='center')
 	for index, value in enumerate(maxThreshold):
 		ax.text(index, value, str(value))
-	ax.bar([i for i in indices], minThreshold, width=width, color='gold', alpha=0.5, label='Min Outcome', align='center')
+	ax.bar([i for i in indices], minThreshold, width=width, color='white', alpha=1, label='Min Outcome', align='center')
 	for index, value in enumerate(minThreshold):
 		ax.text(index, value, str(value))
 	ax.legend(loc=9, bbox_to_anchor=(0.5,-0.2))
