@@ -233,6 +233,10 @@ def realdata_keycomp_treshold_updated_maximal_construct_graph(file_one, file_n, 
         for key2, val2 in table_b.items():
 
             comp_point_2 = key2.split("_")[0]
+            # print(comp_point_1, comp_point_2, dist)
+            #add value to identifier to disitnguish two entries with different values
+            id2 = str(key2) + '_' + str(val2) + '_2'
+            
             dist = calc_max_weight(str(comp_point_1).lower(),str(comp_point_2).lower())
             i+=1
             # print("id1: ", id1, "key2", key2, "dist: ", dist)
@@ -240,14 +244,12 @@ def realdata_keycomp_treshold_updated_maximal_construct_graph(file_one, file_n, 
                 print(str(round(100*i/len(file_one)/len(file_n),2))+'% complete')
             if dist <= treshold_decimal:
 
-                # print(comp_point_1, comp_point_2, dist)
-                #add value to identifier to disitnguish two entries with different values
-                id2 = str(key2) + '_' + str(val2) + '_2'
                 bipartite_graph.add_edge(id1, id2, weight=dist)
                 #edit distance and weight should be inv. prop.
                 #also adding 1 to denom. to prevent divide by 0
                 # add 1,2 to distinguish two key-value tuples belonging to different tables
             else:
+                bipartite_graph.add_edge(id1, id2, weight=0)
                 continue
             
     return bipartite_graph
