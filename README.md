@@ -2,7 +2,7 @@
 
 Data integration is a notoriously difficult and heuristic-driven process, especially when ground-truth data are not readily available. This paper presents a measure of uncertainty in two-table, one-to-many data integration workflows. Users can use these query results to guide a search through different matching parameters, similarity metrics, and constraints. Even though there are exponentially many such matchings, we show that in appropriately constrained circumstances that this result range can be calculated in polynomial time with the Blossom algorithm, a generalization of the Hungarian Algorithm used in Bipartite Graph Matching. We evaluate this on 3 real-world datasets and synthetic datasets, and find that uncertainty estimates are more robust when a graph-matching based approach is used for data integration.
 
-## Notes from my process
+## Previous notes from my process
 
 ###  Maximal Matching Algorithm
 
